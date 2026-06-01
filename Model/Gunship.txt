@@ -1,0 +1,95 @@
+<Hierarchy>:
+	<Frame>: 0 Gunship
+		<Transform>: 0 0 0 0 0 0 1 1 1 0 0 0 1  
+		<TransformMatrix>: 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1  
+		<Children>: 2
+			<Frame>: 1 Gunship
+				<Transform>: 0 1.935662 7.495536E-05 0 0 0 0.6256313 0.6256313 0.6256313 0 0 0 1  
+				<TransformMatrix>: 0.6256313 0 0 0 0 0.6256313 0 0 0 0 0.6256313 0 0 1.935662 7.495536E-05 1  
+				<Mesh>: 2108 Gunship
+					<Bounds>: 0 1.012005 -4.939685 4.68473 4.079505 13.53696
+					<Positions>: 0  
+					<Colors>: 0  
+					<Normals>: 0  
+					<SubMeshes>: 1
+						<SubMesh>: 0 0  
+				</Mesh>
+				<Materials>: 1
+					<Material>: 0
+						<AlbedoColor>: 0.8 0.8 0.8 1
+						<EmissiveColor>: 0 0 0 1
+						<Glossiness>: 0
+						<Metallic>: 0
+						<SpecularHighlight>: 1
+						<GlossyReflection>: 1
+				</Materials>
+				<Children>: 2
+					<Frame>: 2 Back_Rotor
+						<Transform>: -1.70452 3.943093 -16.54226 0 0 0 1 1 1 0 0 0 1  
+						<TransformMatrix>: 1 0 0 0 0 1 0 0 0 0 1 0 -1.70452 3.943093 -16.54226 1  
+						<Mesh>: 260 Back_Rotor
+							<Bounds>: 0.619355 0.05507123 0 0.619355 1.478776 2.451411
+							<Positions>: 0  
+							<Colors>: 0  
+							<Normals>: 0  
+							<SubMeshes>: 1
+								<SubMesh>: 0 0  
+						</Mesh>
+						<Materials>: 1
+							<Material>: 0
+								<AlbedoColor>: 0.8 0.8 0.8 1
+								<EmissiveColor>: 0 0 0 1
+								<Glossiness>: 0
+								<Metallic>: 0
+								<SpecularHighlight>: 1
+								<GlossyReflection>: 1
+						</Materials>
+						<Children>: 0
+					</Frame>
+					<Frame>: 3 Rotor
+						<Transform>: -0.003675398 4.56565 -0.01794033 0 0 0 1 1 1 0 0 0 1  
+						<TransformMatrix>: 1 0 0 0 0 1 0 0 0 0 1 0 -0.003675398 4.56565 -0.01794033 1  
+						<Mesh>: 308 Rotor
+							<Bounds>: -0.001363277 -1.139384 0.004477024 9.913139 1.144587 9.909712
+							<Positions>: 0  
+							<Colors>: 0  
+							<Normals>: 0  
+							<SubMeshes>: 1
+								<SubMesh>: 0 0  
+						</Mesh>
+						<Materials>: 1
+							<Material>: 0
+								<AlbedoColor>: 0.8 0.8 0.8 1
+								<EmissiveColor>: 0 0 0 1
+								<Glossiness>: 0
+								<Metallic>: 0
+								<SpecularHighlight>: 1
+								<GlossyReflection>: 1
+						</Materials>
+						<Children>: 0
+					</Frame>
+			</Frame>
+			<Frame>: 4 Hellfire_Missile
+				<Transform>: 0 -3.472952E-15 0 0 0 0 0.6256313 0.6256313 0.6256313 0 0 0 1  
+				<TransformMatrix>: 0.6256313 0 0 0 0 0.6256313 0 0 0 0 0.6256313 0 0 -3.472952E-15 0 1  
+				<Mesh>: 168 Hellfire_Missile
+					<Bounds>: -0.00219965 -0.002414465 -0.3416661 0.298883 0.301327 1.742219
+					<Positions>: 0  
+					<Colors>: 0  
+					<Normals>: 0  
+					<SubMeshes>: 1
+						<SubMesh>: 0 0  
+				</Mesh>
+				<Materials>: 1
+					<Material>: 0
+						<AlbedoColor>: 0.8 0.8 0.8 1
+						<EmissiveColor>: 0 0 0 1
+						<Glossiness>: 0.1116123
+						<Metallic>: 0
+						<SpecularHighlight>: 1
+						<GlossyReflection>: 1
+				</Materials>
+				<Children>: 0
+			</Frame>
+	</Frame>
+</Hierarchy>
