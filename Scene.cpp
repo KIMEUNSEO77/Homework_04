@@ -554,9 +554,7 @@ void CScene::HitHouseByBullet(XMFLOAT3 xmf3BulletPosition, bool* pbBulletActive,
 			if (m_nCoins < 10) m_nCoins++;
 			if (m_nCoins >= 10)
 			{
-				m_bGameClear = true;
-				m_GameState.m_nScene = GAME_SCENE_GAMECLEAR;
-				ResetMenuCamera();
+				BeginLevel2();
 			}
 			break;
 		}
@@ -779,6 +777,21 @@ bool CScene::IsGameOverMenuClicked(HWND hWnd, LPARAM lParam)
 }
 
 // 시작 화면 폭발
+void CScene::BeginLevel2()
+{
+	 m_GameState.m_nScene = GAME_SCENE_LEVEL2;
+	 m_bFireKeyDown = false;
+	 m_bBombActive = false;
+	 m_bUltimateFiring = false;
+
+	 if (m_pPlayer && m_pTerrain)
+	 {
+		 XMFLOAT3 xmf3Player = m_pPlayer->GetPosition();
+		 xmf3Player.y = m_pTerrain->GetHeight(xmf3Player.x, xmf3Player.z) + 18.0f;
+		 m_pPlayer->SetPosition(xmf3Player);
+	 }
+}
+
 void CScene::StartTitleNameExplosion()
 {
 	if (m_bTitleNameExploding || !m_pxmf3TitleObjectVelocity) return;
@@ -864,7 +877,14 @@ bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 // Level1에서 ESC키 입력 시 메뉴 화면으로 전환
 bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
-	if ((nMessageID == WM_KEYUP) && (wParam == VK_ESCAPE) && (m_GameState.m_nScene == GAME_SCENE_LEVEL1))
+	if ((nMessageID == WM_KEYUP) && (wParam == 'N') && (m_GameState.m_nScene == GAME_SCENE_LEVEL1))
+	{
+		BeginLevel2();
+		return(true);
+	}
+
+	if ((nMessageID == WM_KEYUP) && (wParam == VK_ESCAPE) && 
+		((m_GameState.m_nScene == GAME_SCENE_LEVEL1) || (m_GameState.m_nScene == GAME_SCENE_LEVEL2)))
 	{
 		m_GameState.m_nScene = GAME_SCENE_MENU;
 		m_bFireKeyDown = false;
@@ -879,6 +899,7 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 // Level1에서 Space 키 입력 시 폭탄 발사 처리
 bool CScene::ProcessInput(UCHAR* pKeysBuffer)
 {
+	if (m_GameState.m_nScene == GAME_SCENE_LEVEL2) return(false);
 	if (m_GameState.m_nScene != GAME_SCENE_LEVEL1) return(true);
 
 	bool bFireKeyDown = ((pKeysBuffer[VK_SPACE] & 0xF0) != 0);
@@ -939,6 +960,11 @@ void CScene::AnimateObjects(float fTimeElapsed)
 	if (m_GameState.m_nScene == GAME_SCENE_GAMECLEAR)
 	{
 		for (int i = 0; i < m_nGameClearObjects; i++) m_ppGameClearObjects[i]->UpdateTransform(NULL);
+		return;
+	}
+
+	if (m_GameState.m_nScene == GAME_SCENE_LEVEL2)
+	{
 		return;
 	}
 
@@ -1083,9 +1109,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 				if (m_nCoins < 10) m_nCoins++;
 				if (m_nCoins >= 10)
 				{
-					 m_bGameClear = true;
-					 m_GameState.m_nScene = GAME_SCENE_GAMECLEAR;
-					 ResetMenuCamera();
+					BeginLevel2();
 				}
 				break;
 			}
@@ -1159,6 +1183,11 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 		return;
 	}
 
+	if (m_GameState.m_nScene == GAME_SCENE_LEVEL2)
+	{
+		if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
+		return;
+	}
 
 	if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
 

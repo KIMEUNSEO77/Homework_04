@@ -242,6 +242,12 @@ CAirplanePlayer::CAirplanePlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommand
 	CGameObject *pGameObject = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"Model/Apache.txt");
 	pGameObject->Rotate(15.0f, 0.0f, 0.0f);
 	SetChild(pGameObject);
+
+	m_pLevel2TankObject = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"Model/AbramsTank.txt");
+	m_pLevel2TankObject->SetScale(8.0f, 8.0f, 8.0f);
+	m_pLevel2TankObject->Rotate(0.0f, -90.0f, 0.0f);
+	m_xmf4x4Level2TankTransform = m_pLevel2TankObject->m_xmf4x4Transform;
+
 	OnInitialize();
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
@@ -249,6 +255,7 @@ CAirplanePlayer::CAirplanePlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommand
 
 CAirplanePlayer::~CAirplanePlayer()
 {
+	if (m_pLevel2TankObject) delete m_pLevel2TankObject;
 }
 
 void CAirplanePlayer::OnInitialize()
@@ -278,6 +285,32 @@ void CAirplanePlayer::Animate(float fTimeElapsed, XMFLOAT4X4 *pxmf4x4Parent)
 void CAirplanePlayer::OnPrepareRender()
 {
 	CPlayer::OnPrepareRender();
+}
+
+void CAirplanePlayer::SetLevel2ModelEnabled(bool bEnabled)
+{
+	m_bLevel2ModelEnabled = bEnabled;
+}
+
+void CAirplanePlayer::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
+{
+	if (m_bLevel2ModelEnabled && m_pLevel2TankObject)
+	{
+		CPlayer::OnPrepareRender();
+		m_pLevel2TankObject->m_xmf4x4Transform = Matrix4x4::Multiply(m_xmf4x4Level2TankTransform, m_xmf4x4Transform);
+		m_pLevel2TankObject->UpdateTransform(NULL);
+		m_pLevel2TankObject->Render(pd3dCommandList, pCamera);
+	}
+	else
+	{
+		CPlayer::Render(pd3dCommandList, pCamera);
+	}
+}
+
+void CAirplanePlayer::ReleaseUploadBuffers()
+{
+	CPlayer::ReleaseUploadBuffers();
+	if (m_pLevel2TankObject) m_pLevel2TankObject->ReleaseUploadBuffers();
 }
 
 CCamera *CAirplanePlayer::ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed)

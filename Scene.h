@@ -12,8 +12,9 @@ enum GAME_SCENE_ID
 	GAME_SCENE_TITLE = 0,
 	GAME_SCENE_MENU = 1,
 	GAME_SCENE_LEVEL1 = 2,
-	GAME_SCENE_GAMEOVER = 3,
-	GAME_SCENE_GAMECLEAR = 4
+	GAME_SCENE_LEVEL2 = 3,
+	GAME_SCENE_GAMEOVER = 4,
+	GAME_SCENE_GAMECLEAR = 5
 };
 
 struct GAME_STATE
@@ -40,7 +41,8 @@ public:
 	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device* pd3dDevice);
 	ID3D12RootSignature* GetGraphicsRootSignature() { return(m_pd3dGraphicsRootSignature); }
 	CHeightMapTerrain* GetTerrain() { return(m_pTerrain); }
-	bool IsLevelScene() { return(m_GameState.m_nScene == GAME_SCENE_LEVEL1); }
+	bool IsLevelScene() { return((m_GameState.m_nScene == GAME_SCENE_LEVEL1) || (m_GameState.m_nScene == GAME_SCENE_LEVEL2)); }
+	bool IsLevel2Scene() { return(m_GameState.m_nScene == GAME_SCENE_LEVEL2); }
 
 	bool ProcessInput(UCHAR* pKeysBuffer);
 	void AnimateObjects(float fTimeElapsed);
@@ -67,6 +69,7 @@ public:
 	bool IsGameOverMenuClicked(HWND hWnd, LPARAM lParam);
 	void ResetMenuCamera();
 	void ResetLevelState();
+	void BeginLevel2();
 	void StartTitleNameExplosion();
 
 	CPlayer*					m_pPlayer = NULL;

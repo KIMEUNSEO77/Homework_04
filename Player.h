@@ -77,6 +77,7 @@ public:
 	CCamera *OnChangeCamera(DWORD nNewCameraMode, DWORD nCurrentCameraMode);
 
 	virtual CCamera *ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed) { return(NULL); }
+	virtual void SetLevel2ModelEnabled(bool bEnabled) { }
 	virtual void OnPrepareRender();
 	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera = NULL);
 };
@@ -91,14 +92,20 @@ public:
 	CGameObject*				m_pMainRotorFrame1 = NULL;
 	CGameObject*				m_pTailRotorFrame0 = NULL;
 	CGameObject*				m_pTailRotorFrame1 = NULL;
+	CGameObject*				m_pLevel2TankObject = NULL;
+	XMFLOAT4X4					m_xmf4x4Level2TankTransform;
+	bool						m_bLevel2ModelEnabled = false;
 
 private:
 	virtual void OnInitialize();
 	virtual void Animate(float fTimeElapsed, XMFLOAT4X4 *pxmf4x4Parent = NULL);
 
 public:
+	virtual void SetLevel2ModelEnabled(bool bEnabled);
 	virtual CCamera *ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed);
 	virtual void OnPrepareRender();
+	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera = NULL);
+	virtual void ReleaseUploadBuffers();
 };
 
 
