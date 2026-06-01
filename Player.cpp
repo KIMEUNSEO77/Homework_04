@@ -245,7 +245,6 @@ CAirplanePlayer::CAirplanePlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommand
 
 	m_pLevel2TankObject = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"Model/AbramsTank.txt");
 	m_pLevel2TankObject->SetScale(8.0f, 8.0f, 8.0f);
-	m_pLevel2TankObject->Rotate(0.0f, -90.0f, 0.0f);
 	m_xmf4x4Level2TankTransform = m_pLevel2TankObject->m_xmf4x4Transform;
 
 	OnInitialize();
