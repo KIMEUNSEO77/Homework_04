@@ -386,7 +386,7 @@ void CScene::BuildLevel2Objects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandL
 		float fScale = RandomRange(8.0f, 13.0f);
 
 		CGameObject* pHouse = CreateHouseObject(pd3dDevice, pd3dCommandList, ppstrHouseFiles[i % 4], x, z, fScale, fYaw, m_pTerrain);
-		pHouse->SetColor(XMFLOAT4(RandomRange(0.45f, 1.25f), RandomRange(0.45f, 1.25f), RandomRange(0.45f, 1.25f), 1.0f));
+		
 		m_ppLevel2Objects[i] = pHouse;
 	}
 }
