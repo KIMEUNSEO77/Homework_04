@@ -86,6 +86,7 @@ public:
 	CGameObject**				m_ppLevel2Objects = NULL;
 	int							m_nLevel2Objects = 0;
 	CGameObject*				m_ppEnemyTankObjects[10] = { NULL };
+	CGameObject*				m_ppEnemyTankLodObjects[10] = { NULL };
 	bool						m_bEnemyTankActive[10] = { false };
 	CGameObject**				 m_ppTitleObjects = NULL;
 	int								 m_nTitleObjects = 0;

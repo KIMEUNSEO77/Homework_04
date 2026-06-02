@@ -23,6 +23,33 @@ namespace
 	{
 		return(fMin + ((fMax - fMin) * (rand() / float(RAND_MAX))));
 	}
+
+	float DistanceXZFromCamera(CCamera* pCamera, CGameObject* pObject)
+	{
+		if (!pCamera || !pObject) return(999999.0f);
+		XMFLOAT3 xmf3Camera = pCamera->GetPosition();
+		XMFLOAT3 xmf3Object = pObject->GetPosition();
+		return(DistanceXZ(xmf3Camera, xmf3Object));
+	}
+
+	bool IsInFrontOfCamera(CCamera* pCamera, CGameObject* pObject, float fBackTolerance)
+	{
+		if (!pCamera || !pObject) return(false);
+		XMFLOAT3 xmf3Camera = pCamera->GetPosition();
+		XMFLOAT3 xmf3Object = pObject->GetPosition();
+		XMFLOAT3 xmf3ToObject = Vector3::Subtract(xmf3Object, xmf3Camera);
+		xmf3ToObject.y = 0.0f;
+		float fDistance = Vector3::Length(xmf3ToObject);
+		if (fDistance < fBackTolerance) return(true);
+
+		XMFLOAT3 xmf3Look = pCamera->GetLookVector();
+		xmf3Look.y = 0.0f;
+		if (Vector3::Length(xmf3Look) < 0.001f) return(true);
+
+		xmf3Look = Vector3::Normalize(xmf3Look);
+		xmf3ToObject = Vector3::Normalize(xmf3ToObject);
+		return(Vector3::DotProduct(xmf3Look, xmf3ToObject) > -0.10f);
+	}
 	// 목표 위치를 바라보도록 y축 회전값 계산
 	void TurnObjectToTarget(CGameObject* pObject, XMFLOAT3 xmf3Target)
 	{
@@ -418,6 +445,12 @@ void CScene::BuildLevel2EnemyTanks(ID3D12Device* pd3dDevice, ID3D12GraphicsComma
 		pEnemyTank->SetPosition(x, TerrainY(m_pTerrain, x, z, 18.0f), z);
 
 		m_ppEnemyTankObjects[i] = pEnemyTank;
+
+		CGameObject* pEnemyTankLod = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(0.28f, 0.38f, 0.20f, 1.0f), 34.0f);
+		pEnemyTankLod->SetScale(1.45f, 0.45f, 0.85f);
+		pEnemyTankLod->Rotate(0.0f, fYaw, 0.0f);
+		pEnemyTankLod->SetPosition(x, TerrainY(m_pTerrain, x, z, 18.0f), z);
+		m_ppEnemyTankLodObjects[i] = pEnemyTankLod;
 		m_bEnemyTankActive[i] = true;
 	}
 }
@@ -638,7 +671,9 @@ void CScene::ReleaseObjects()
 	for (int i = 0; i < 10; i++)
 	{
 		if (m_ppEnemyTankObjects[i]) delete m_ppEnemyTankObjects[i];
+		if (m_ppEnemyTankLodObjects[i]) delete m_ppEnemyTankLodObjects[i];
 		m_ppEnemyTankObjects[i] = NULL;
+		m_ppEnemyTankLodObjects[i] = NULL;
 		m_bEnemyTankActive[i] = false;
 	}
 	ReleaseSceneObjects(m_ppTitleObjects, m_nTitleObjects);
@@ -715,6 +750,7 @@ void CScene::ReleaseUploadBuffers()
 	for (int i = 0; i < m_nGameObjects; i++) m_ppGameObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < m_nLevel2Objects; i++) if (m_ppLevel2Objects[i]) m_ppLevel2Objects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < 10; i++) if (m_ppEnemyTankObjects[i]) m_ppEnemyTankObjects[i]->ReleaseUploadBuffers();
+	for (int i = 0; i < 10; i++) if (m_ppEnemyTankLodObjects[i]) m_ppEnemyTankLodObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < m_nTitleObjects; i++) if (m_ppTitleObjects[i]) m_ppTitleObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < m_nMenuObjects; i++) if (m_ppMenuObjects[i]) m_ppMenuObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < m_nGameOverObjects; i++) if (m_ppGameOverObjects[i]) m_ppGameOverObjects[i]->ReleaseUploadBuffers();
@@ -1266,8 +1302,29 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 	if (m_GameState.m_nScene == GAME_SCENE_LEVEL2)
 	{
 		if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
-		RenderSceneObjects(pd3dCommandList, pCamera, m_ppLevel2Objects, m_nLevel2Objects);
-		for (int i = 0; i < 10; i++) if (m_bEnemyTankActive[i] && m_ppEnemyTankObjects[i]) m_ppEnemyTankObjects[i]->Render(pd3dCommandList, pCamera);
+
+		for (int i = 0; i < m_nLevel2Objects; i++)
+		{
+			if ((DistanceXZFromCamera(pCamera, m_ppLevel2Objects[i]) < 650.0f) && IsInFrontOfCamera(pCamera, m_ppLevel2Objects[i], 160.0f))
+			{
+				m_ppLevel2Objects[i]->Render(pd3dCommandList, pCamera);
+			}
+		}
+
+		for (int i = 0; i < 10; i++)
+		{
+			if (!m_bEnemyTankActive[i]) continue;
+
+			float fDistance = DistanceXZFromCamera(pCamera, m_ppEnemyTankObjects[i]);
+			if ((fDistance < 260.0f) && IsInFrontOfCamera(pCamera, m_ppEnemyTankObjects[i], 120.0f))
+			{
+				m_ppEnemyTankObjects[i]->Render(pd3dCommandList, pCamera);
+			}
+			else if ((fDistance < 700.0f) && IsInFrontOfCamera(pCamera, m_ppEnemyTankLodObjects[i], 160.0f))
+			{
+				m_ppEnemyTankLodObjects[i]->Render(pd3dCommandList, pCamera);
+			}
+		}
 		return;
 	}
 
