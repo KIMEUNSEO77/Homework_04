@@ -492,7 +492,7 @@ void CGameFramework::ProcessInput()
 				else
 					m_pPlayer->Rotate(cyDelta, cxDelta, 0.0f);
 			}
-			if (dwDirection) m_pPlayer->Move(dwDirection, (bLevel2 ? 3.0f : 12.0f), true);
+			if (dwDirection) m_pPlayer->Move(dwDirection, (bLevel2 ? 3.8f : 12.0f), true);
 			if (dwVerticalDirection) m_pPlayer->Move(dwVerticalDirection, 120.0f * m_GameTimer.GetTimeElapsed(), false);
 		}
 	}
@@ -501,9 +501,39 @@ void CGameFramework::ProcessInput()
 	if (m_pScene && m_pScene->IsLevel2Scene() && m_pScene->GetTerrain())
 	{
 		XMFLOAT3 xmf3Player = m_pPlayer->GetPosition();
-		xmf3Player.y = m_pScene->GetTerrain()->GetHeight(xmf3Player.x, xmf3Player.z) + 18.0f;
+		CHeightMapTerrain* pTerrain = m_pScene->GetTerrain();
+		xmf3Player.y = pTerrain->GetHeight(xmf3Player.x, xmf3Player.z) + 18.0f;
 		m_pPlayer->SetVelocity(XMFLOAT3(m_pPlayer->GetVelocity().x, 0.0f, m_pPlayer->GetVelocity().z));
 		m_pPlayer->SetPosition(xmf3Player);
+
+		XMFLOAT3 xmf3FlatLook = m_pPlayer->GetLookVector();
+		xmf3FlatLook.y = 0.0f;
+		if (Vector3::Length(xmf3FlatLook) < 0.001f) xmf3FlatLook = XMFLOAT3(0.0f, 0.0f, 1.0f);
+		xmf3FlatLook = Vector3::Normalize(xmf3FlatLook);
+
+		XMFLOAT3 xmf3FlatRight = XMFLOAT3(xmf3FlatLook.z, 0.0f, -xmf3FlatLook.x);
+		xmf3FlatRight = Vector3::Normalize(xmf3FlatRight);
+
+		const float fForwardSample = 34.0f;
+		const float fSideSample = 24.0f;
+		XMFLOAT3 xmf3Front = Vector3::Add(xmf3Player, xmf3FlatLook, fForwardSample);
+		XMFLOAT3 xmf3Back = Vector3::Add(xmf3Player, xmf3FlatLook, -fForwardSample);
+		XMFLOAT3 xmf3Right = Vector3::Add(xmf3Player, xmf3FlatRight, fSideSample);
+		XMFLOAT3 xmf3Left = Vector3::Add(xmf3Player, xmf3FlatRight, -fSideSample);
+
+		xmf3Front.y = pTerrain->GetHeight(xmf3Front.x, xmf3Front.z) + 18.0f;
+		xmf3Back.y = pTerrain->GetHeight(xmf3Back.x, xmf3Back.z) + 18.0f;
+		xmf3Right.y = pTerrain->GetHeight(xmf3Right.x, xmf3Right.z) + 18.0f;
+		xmf3Left.y = pTerrain->GetHeight(xmf3Left.x, xmf3Left.z) + 18.0f;
+
+		XMFLOAT3 xmf3TankLook = Vector3::Subtract(xmf3Front, xmf3Back);
+		XMFLOAT3 xmf3TankRight = Vector3::Subtract(xmf3Right, xmf3Left);
+		xmf3TankLook = Vector3::Normalize(xmf3TankLook);
+		xmf3TankRight = Vector3::Normalize(xmf3TankRight);
+
+		XMFLOAT3 xmf3TankUp = Vector3::CrossProduct(xmf3TankLook, xmf3TankRight, true);
+		xmf3TankRight = Vector3::CrossProduct(xmf3TankUp, xmf3TankLook, true);
+		m_pPlayer->SetOrientation(xmf3TankRight, xmf3TankUp, xmf3TankLook);
 	}
 }
 void CGameFramework::AnimateObjects()

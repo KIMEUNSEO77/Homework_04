@@ -139,6 +139,13 @@ void CPlayer::Rotate(float x, float y, float z)
 	m_xmf3Up = Vector3::CrossProduct(m_xmf3Look, m_xmf3Right, true);
 }
 
+void CPlayer::SetOrientation(const XMFLOAT3& xmf3Right, const XMFLOAT3& xmf3Up, const XMFLOAT3& xmf3Look)
+{
+	m_xmf3Right = xmf3Right;
+	m_xmf3Up = xmf3Up;
+	m_xmf3Look = xmf3Look;
+}
+
 void CPlayer::Update(float fTimeElapsed)
 {
 	m_xmf3Velocity = Vector3::Add(m_xmf3Velocity, m_xmf3Gravity);
