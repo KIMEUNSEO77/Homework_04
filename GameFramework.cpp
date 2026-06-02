@@ -458,13 +458,17 @@ void CGameFramework::ProcessInput()
 	{
 		DWORD dwDirection = 0;
 		DWORD dwVerticalDirection = 0;
+		bool bLevel2 = (m_pScene && m_pScene->IsLevel2Scene());
 
 		if (pKeysBuffer['W'] & 0xF0) dwDirection |= DIR_FORWARD;
 		if (pKeysBuffer['S'] & 0xF0) dwDirection |= DIR_BACKWARD;
 		if (pKeysBuffer['A'] & 0xF0) dwDirection |= DIR_LEFT;
 		if (pKeysBuffer['D'] & 0xF0) dwDirection |= DIR_RIGHT;
-		if (pKeysBuffer['Q'] & 0xF0) dwVerticalDirection |= DIR_UP;
-		if (pKeysBuffer['E'] & 0xF0) dwVerticalDirection |= DIR_DOWN;
+		if (!bLevel2)
+		{
+			if (pKeysBuffer['Q'] & 0xF0) dwVerticalDirection |= DIR_UP;
+			if (pKeysBuffer['E'] & 0xF0) dwVerticalDirection |= DIR_DOWN;
+		}
 
 		float cxDelta = 0.0f, cyDelta = 0.0f;
 		POINT ptCursorPos;
@@ -481,16 +485,26 @@ void CGameFramework::ProcessInput()
 		{
 			if (cxDelta || cyDelta)
 			{
-				if (pKeysBuffer[VK_RBUTTON] & 0xF0)
+				if (bLevel2)
+					m_pPlayer->Rotate(0.0f, cxDelta, 0.0f);
+				else if (pKeysBuffer[VK_RBUTTON] & 0xF0)
 					m_pPlayer->Rotate(cyDelta, 0.0f, -cxDelta);
 				else
 					m_pPlayer->Rotate(cyDelta, cxDelta, 0.0f);
 			}
-			if (dwDirection) m_pPlayer->Move(dwDirection, 12.0f, true);
+			if (dwDirection) m_pPlayer->Move(dwDirection, (bLevel2 ? 7.0f : 12.0f), true);
 			if (dwVerticalDirection) m_pPlayer->Move(dwVerticalDirection, 120.0f * m_GameTimer.GetTimeElapsed(), false);
 		}
 	}
 	m_pPlayer->Update(m_GameTimer.GetTimeElapsed());
+
+	if (m_pScene && m_pScene->IsLevel2Scene() && m_pScene->GetTerrain())
+	{
+		XMFLOAT3 xmf3Player = m_pPlayer->GetPosition();
+		xmf3Player.y = m_pScene->GetTerrain()->GetHeight(xmf3Player.x, xmf3Player.z) + 18.0f;
+		m_pPlayer->SetVelocity(XMFLOAT3(m_pPlayer->GetVelocity().x, 0.0f, m_pPlayer->GetVelocity().z));
+		m_pPlayer->SetPosition(xmf3Player);
+	}
 }
 void CGameFramework::AnimateObjects()
 {
