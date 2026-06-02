@@ -404,6 +404,23 @@ void CScene::BuildLevel2Objects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandL
 		m_ppLevel2Objects[nObject] = pTree;
 	}
 }
+void CScene::BuildLevel2EnemyTanks(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
+{
+	for (int i = 0; i < 10; i++)
+	{
+		float x = RandomRange(260.0f, m_pTerrain->GetWidth() - 260.0f);
+		float z = RandomRange(260.0f, m_pTerrain->GetLength() - 260.0f);
+		float fYaw = RandomRange(0.0f, 360.0f);
+
+		CGameObject* pEnemyTank = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"Model/AbramsTank.txt");
+		pEnemyTank->SetScale(11.0f, 11.0f, 11.0f);
+		pEnemyTank->Rotate(0.0f, fYaw, 0.0f);
+		pEnemyTank->SetPosition(x, TerrainY(m_pTerrain, x, z, 18.0f), z);
+
+		m_ppEnemyTankObjects[i] = pEnemyTank;
+		m_bEnemyTankActive[i] = true;
+	}
+}
 void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
 {
 	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDevice);
@@ -417,6 +434,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	XMFLOAT3 xmf3TerrainScale(8.0f, 2.0f, 8.0f);
 	m_pTerrain = new CHeightMapTerrain(pd3dDevice, pd3dCommandList, _T("Image/HeightMap.raw"), 257, 257, 257, 257, xmf3TerrainScale);
 	BuildLevel2Objects(pd3dDevice, pd3dCommandList);
+	BuildLevel2EnemyTanks(pd3dDevice, pd3dCommandList);
 
 	m_nGameObjects = 19;
 	m_ppGameObjects = new CGameObject * [m_nGameObjects];
@@ -617,6 +635,12 @@ void CScene::ReleaseObjects()
 	ReleaseSceneObjects(m_ppLevel2Objects, m_nLevel2Objects);
 	m_ppLevel2Objects = NULL;
 	m_nLevel2Objects = 0;
+	for (int i = 0; i < 10; i++)
+	{
+		if (m_ppEnemyTankObjects[i]) delete m_ppEnemyTankObjects[i];
+		m_ppEnemyTankObjects[i] = NULL;
+		m_bEnemyTankActive[i] = false;
+	}
 	ReleaseSceneObjects(m_ppTitleObjects, m_nTitleObjects);
 	m_ppTitleObjects = NULL;
 	m_nTitleObjects = 0;
@@ -690,6 +714,7 @@ void CScene::ReleaseUploadBuffers()
 	if (m_pTerrain) m_pTerrain->ReleaseUploadBuffers();
 	for (int i = 0; i < m_nGameObjects; i++) m_ppGameObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < m_nLevel2Objects; i++) if (m_ppLevel2Objects[i]) m_ppLevel2Objects[i]->ReleaseUploadBuffers();
+	for (int i = 0; i < 10; i++) if (m_ppEnemyTankObjects[i]) m_ppEnemyTankObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < m_nTitleObjects; i++) if (m_ppTitleObjects[i]) m_ppTitleObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < m_nMenuObjects; i++) if (m_ppMenuObjects[i]) m_ppMenuObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < m_nGameOverObjects; i++) if (m_ppGameOverObjects[i]) m_ppGameOverObjects[i]->ReleaseUploadBuffers();
@@ -1242,6 +1267,7 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 	{
 		if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
 		RenderSceneObjects(pd3dCommandList, pCamera, m_ppLevel2Objects, m_nLevel2Objects);
+		for (int i = 0; i < 10; i++) if (m_bEnemyTankActive[i] && m_ppEnemyTankObjects[i]) m_ppEnemyTankObjects[i]->Render(pd3dCommandList, pCamera);
 		return;
 	}
 
