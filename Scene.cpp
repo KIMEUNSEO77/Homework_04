@@ -366,8 +366,9 @@ void CScene::BuildGameClearObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsComma
 
 void CScene::BuildLevel2Objects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
 {
-	const int nLevel2Objects = 50;
-	m_nLevel2Objects = nLevel2Objects;
+	const int nLevel2HouseObjects = 50;
+	const int nLevel2TreeObjects = 8;
+	m_nLevel2Objects = nLevel2HouseObjects + nLevel2TreeObjects;
 	m_ppLevel2Objects = new CGameObject * [m_nLevel2Objects];
 
 	const char* ppstrHouseFiles[] =
@@ -378,16 +379,29 @@ void CScene::BuildLevel2Objects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandL
 		"Models/Meshes/ams_house6.bin"
 	};
 
-	for (int i = 0; i < m_nLevel2Objects; i++)
+	for (int i = 0; i < nLevel2HouseObjects; i++)
 	{
 		float x = RandomRange(220.0f, m_pTerrain->GetWidth() - 220.0f);
 		float z = RandomRange(220.0f, m_pTerrain->GetLength() - 220.0f);
 		float fYaw = RandomRange(0.0f, 360.0f);
 		float fScale = RandomRange(8.0f, 13.0f);
 
-		CGameObject* pHouse = CreateHouseObject(pd3dDevice, pd3dCommandList, ppstrHouseFiles[i % 4], x, z, fScale, fYaw, m_pTerrain);
-		
-		m_ppLevel2Objects[i] = pHouse;
+		m_ppLevel2Objects[i] = CreateHouseObject(pd3dDevice, pd3dCommandList, ppstrHouseFiles[i % 4], x, z, fScale, fYaw, m_pTerrain);
+	}
+
+	for (int i = 0; i < nLevel2TreeObjects; i++)
+	{
+		int nObject = nLevel2HouseObjects + i;
+		float x = RandomRange(220.0f, m_pTerrain->GetWidth() - 220.0f);
+		float z = RandomRange(220.0f, m_pTerrain->GetLength() - 220.0f);
+		float fYaw = RandomRange(0.0f, 360.0f);
+		float fScale = RandomRange(5.0f, 8.0f);
+
+		CGameObject* pTree = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"Model/Tree.txt");
+		pTree->SetScale(fScale, fScale, fScale);
+		pTree->Rotate(0.0f, fYaw, 0.0f);
+		pTree->SetPosition(x, TerrainY(m_pTerrain, x, z, 0.0f), z);
+		m_ppLevel2Objects[nObject] = pTree;
 	}
 }
 void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
