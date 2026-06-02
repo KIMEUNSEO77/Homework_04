@@ -789,6 +789,14 @@ void CScene::BeginLevel2()
 		 XMFLOAT3 xmf3Player = m_pPlayer->GetPosition();
 		 xmf3Player.y = m_pTerrain->GetHeight(xmf3Player.x, xmf3Player.z) + 18.0f;
 		 m_pPlayer->SetPosition(xmf3Player);
+
+		 CCamera* pCamera = m_pPlayer->GetCamera();
+		 if (pCamera)
+		 {
+			 pCamera->SetOffset(XMFLOAT3(0.0f, 95.0f, -125.0f));
+			 pCamera->SetTimeLag(0.18f);
+			 pCamera->SetPosition(Vector3::Add(xmf3Player, pCamera->GetOffset()));
+		 }
 	 }
 }
 
