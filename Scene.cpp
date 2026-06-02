@@ -370,28 +370,6 @@ void CScene::BuildLevel2Objects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandL
 	m_nLevel2Objects = nLevel2Objects;
 	m_ppLevel2Objects = new CGameObject * [m_nLevel2Objects];
 
-	const wchar_t* ppstrModelFiles[] =
-	{
-		L"Model/Tree.txt",
-		L"Model/Cactus.txt",
-		L"Model/Rock.txt",
-		L"Model/Rock2.txt",
-		L"Model/OldCar.txt",
-		L"Model/PoliceCar.txt",
-		L"Model/RallyCar.txt",
-		L"Model/Hummer.txt",
-		L"Model/MX6.txt",
-		L"Model/SF_MX4.txt",
-		L"Model/Spaceship.txt"
-	};
-	const float pfModelScales[] =
-	{
-		4.5f, 9.0f, 12.0f, 12.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f
-	};
-	const float pfModelOffsets[] =
-	{
-		0.0f, 0.0f, 4.0f, 4.0f, 8.0f, 8.0f, 8.0f, 8.0f, 8.0f, 8.0f, 18.0f
-	};
 	const char* ppstrHouseFiles[] =
 	{
 		"Models/Meshes/ams_house3.bin",
@@ -400,26 +378,16 @@ void CScene::BuildLevel2Objects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandL
 		"Models/Meshes/ams_house6.bin"
 	};
 
-	const int nModelTypes = _countof(ppstrModelFiles);
 	for (int i = 0; i < m_nLevel2Objects; i++)
 	{
 		float x = RandomRange(220.0f, m_pTerrain->GetWidth() - 220.0f);
 		float z = RandomRange(220.0f, m_pTerrain->GetLength() - 220.0f);
 		float fYaw = RandomRange(0.0f, 360.0f);
+		float fScale = RandomRange(8.0f, 13.0f);
 
-		if ((i % 5) == 0)
-		{
-			m_ppLevel2Objects[i] = CreateHouseObject(pd3dDevice, pd3dCommandList, ppstrHouseFiles[(i / 5) % 4], x, z, 10.0f, fYaw, m_pTerrain);
-		}
-		else
-		{
-			int nModel = i % nModelTypes;
-			CGameObject* pObject = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, (TCHAR*)ppstrModelFiles[nModel]);
-			pObject->SetScale(pfModelScales[nModel], pfModelScales[nModel], pfModelScales[nModel]);
-			pObject->Rotate(0.0f, fYaw, 0.0f);
-			pObject->SetPosition(x, TerrainY(m_pTerrain, x, z, pfModelOffsets[nModel]), z);
-			m_ppLevel2Objects[i] = pObject;
-		}
+		CGameObject* pHouse = CreateHouseObject(pd3dDevice, pd3dCommandList, ppstrHouseFiles[i % 4], x, z, fScale, fYaw, m_pTerrain);
+		pHouse->SetColor(XMFLOAT4(RandomRange(0.45f, 1.25f), RandomRange(0.45f, 1.25f), RandomRange(0.45f, 1.25f), 1.0f));
+		m_ppLevel2Objects[i] = pHouse;
 	}
 }
 void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
