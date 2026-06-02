@@ -62,6 +62,7 @@ public:
 	void BuildMenuObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
 	void BuildGameOverObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
 	void BuildGameClearObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
+	void BuildLevel2Objects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
 	void ReleaseSceneObjects(CGameObject** ppObjects, int nObjects);
 	void RenderSceneObjects(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, CGameObject** ppObjects, int nObjects);
 	bool IsTitleNameClicked(HWND hWnd, LPARAM lParam);
@@ -81,6 +82,8 @@ public:
 
 	CGameObject**				m_ppGameObjects = NULL;
 	int							m_nGameObjects = 0;
+	CGameObject**				m_ppLevel2Objects = NULL;
+	int							m_nLevel2Objects = 0;
 	CGameObject**				 m_ppTitleObjects = NULL;
 	int								 m_nTitleObjects = 0;
 	int							 m_nTitleNameStart = 0;

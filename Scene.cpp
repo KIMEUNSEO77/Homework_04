@@ -364,6 +364,64 @@ void CScene::BuildGameClearObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsComma
 	for (int i = 0; i < m_nGameClearObjects; i++) m_ppGameClearObjects[i] = vObjects[i];
 }
 
+void CScene::BuildLevel2Objects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
+{
+	const int nLevel2Objects = 50;
+	m_nLevel2Objects = nLevel2Objects;
+	m_ppLevel2Objects = new CGameObject * [m_nLevel2Objects];
+
+	const wchar_t* ppstrModelFiles[] =
+	{
+		L"Model/Tree.txt",
+		L"Model/Cactus.txt",
+		L"Model/Rock.txt",
+		L"Model/Rock2.txt",
+		L"Model/OldCar.txt",
+		L"Model/PoliceCar.txt",
+		L"Model/RallyCar.txt",
+		L"Model/Hummer.txt",
+		L"Model/MX6.txt",
+		L"Model/SF_MX4.txt",
+		L"Model/Spaceship.txt"
+	};
+	const float pfModelScales[] =
+	{
+		4.5f, 9.0f, 12.0f, 12.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f
+	};
+	const float pfModelOffsets[] =
+	{
+		0.0f, 0.0f, 4.0f, 4.0f, 8.0f, 8.0f, 8.0f, 8.0f, 8.0f, 8.0f, 18.0f
+	};
+	const char* ppstrHouseFiles[] =
+	{
+		"Models/Meshes/ams_house3.bin",
+		"Models/Meshes/ams_house4.bin",
+		"Models/Meshes/ams_house5.bin",
+		"Models/Meshes/ams_house6.bin"
+	};
+
+	const int nModelTypes = _countof(ppstrModelFiles);
+	for (int i = 0; i < m_nLevel2Objects; i++)
+	{
+		float x = RandomRange(220.0f, m_pTerrain->GetWidth() - 220.0f);
+		float z = RandomRange(220.0f, m_pTerrain->GetLength() - 220.0f);
+		float fYaw = RandomRange(0.0f, 360.0f);
+
+		if ((i % 5) == 0)
+		{
+			m_ppLevel2Objects[i] = CreateHouseObject(pd3dDevice, pd3dCommandList, ppstrHouseFiles[(i / 5) % 4], x, z, 10.0f, fYaw, m_pTerrain);
+		}
+		else
+		{
+			int nModel = i % nModelTypes;
+			CGameObject* pObject = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, (TCHAR*)ppstrModelFiles[nModel]);
+			pObject->SetScale(pfModelScales[nModel], pfModelScales[nModel], pfModelScales[nModel]);
+			pObject->Rotate(0.0f, fYaw, 0.0f);
+			pObject->SetPosition(x, TerrainY(m_pTerrain, x, z, pfModelOffsets[nModel]), z);
+			m_ppLevel2Objects[i] = pObject;
+		}
+	}
+}
 void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
 {
 	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDevice);
@@ -376,6 +434,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 
 	XMFLOAT3 xmf3TerrainScale(8.0f, 2.0f, 8.0f);
 	m_pTerrain = new CHeightMapTerrain(pd3dDevice, pd3dCommandList, _T("Image/HeightMap.raw"), 257, 257, 257, 257, xmf3TerrainScale);
+	BuildLevel2Objects(pd3dDevice, pd3dCommandList);
 
 	m_nGameObjects = 19;
 	m_ppGameObjects = new CGameObject * [m_nGameObjects];
@@ -573,6 +632,9 @@ void CScene::ReleaseObjects()
 		for (int i = 0; i < m_nGameObjects; i++) delete m_ppGameObjects[i];
 		delete[] m_ppGameObjects;
 	}
+	ReleaseSceneObjects(m_ppLevel2Objects, m_nLevel2Objects);
+	m_ppLevel2Objects = NULL;
+	m_nLevel2Objects = 0;
 	ReleaseSceneObjects(m_ppTitleObjects, m_nTitleObjects);
 	m_ppTitleObjects = NULL;
 	m_nTitleObjects = 0;
@@ -645,6 +707,7 @@ void CScene::ReleaseUploadBuffers()
 {
 	if (m_pTerrain) m_pTerrain->ReleaseUploadBuffers();
 	for (int i = 0; i < m_nGameObjects; i++) m_ppGameObjects[i]->ReleaseUploadBuffers();
+	for (int i = 0; i < m_nLevel2Objects; i++) if (m_ppLevel2Objects[i]) m_ppLevel2Objects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < m_nTitleObjects; i++) if (m_ppTitleObjects[i]) m_ppTitleObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < m_nMenuObjects; i++) if (m_ppMenuObjects[i]) m_ppMenuObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < m_nGameOverObjects; i++) if (m_ppGameOverObjects[i]) m_ppGameOverObjects[i]->ReleaseUploadBuffers();
@@ -1196,6 +1259,7 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 	if (m_GameState.m_nScene == GAME_SCENE_LEVEL2)
 	{
 		if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
+		RenderSceneObjects(pd3dCommandList, pCamera, m_ppLevel2Objects, m_nLevel2Objects);
 		return;
 	}
 
