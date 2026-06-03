@@ -51,6 +51,8 @@ public:
 	void ReleaseUploadBuffers();
 
 	void FireBomb();
+	void FirePlayerShell();
+	void UpdatePlayerShell(float fTimeElapsed);
 	void RespawnHouse(int nIndex);
 	void MakeExplosion(XMFLOAT3 xmf3Position);
 	void UpdateCoinObjects(CCamera* pCamera);
@@ -120,6 +122,11 @@ public:
 	int							 m_nUltimateGauge = 0;
 	int							 m_nUltimateNextBullet = 0;
 	bool						 m_bUltimateFiring = false;
+	CGameObject*					 m_pPlayerShell = NULL;
+	bool								 m_bPlayerShellActive = false;
+	bool								 m_bPlayerShellKeyDown = false;
+	XMFLOAT3						 m_xmf3PlayerShellVelocity = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	float							 m_fPlayerShellLifeTime = 0.0f;
 	CGameObject*					m_ppExplosionObjects[16] = { NULL };
 	XMFLOAT3						m_pxmf3ExplosionVelocity[16];
 	float								m_pfExplosionTime[16] = { 0.0f };
