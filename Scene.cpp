@@ -545,6 +545,7 @@ void CScene::BuildLevel2Objects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandL
 	for (int i = 0; i < 10; i++) m_ppCoinObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 3.0f, 0.1f, 1.0f), 1.4f);
 	for (int i = 0; i < 10; i++) m_ppUltimateGaugeObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 0.1f, 0.1f, 1.0f), 2.0f);
 	for (int i = 0; i < 10; i++) m_ppHealthObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 0.0f, 0.0f, 1.0f), 2.2f);
+	for (int i = 0; i < 12; i++) m_ppShieldObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(0.15f, 1.4f, 4.0f, 1.0f), 5.0f);
 	for (int i = 0; i < 10; i++) m_ppUltimateBulletObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 0.1f, 0.1f, 1.0f), 6.0f);
 	for (int i = 0; i < 16; i++)
 	{
@@ -766,8 +767,11 @@ void CScene::UpdateEnemyTankShells(float fTimeElapsed)
 		XMFLOAT3 xmf3Player = m_pPlayer->GetPosition();
 		if ((m_fEnemyTankShellLifeTime[i] > 0.18f) && (DistanceXZ(xmf3Shell, xmf3Player) < 38.0f) && (xmf3Shell.y >= (xmf3Player.y - 12.0f)) && (xmf3Shell.y <= (xmf3Player.y + 55.0f)))
 		{
-			MakeExplosion(xmf3Player);
-			if (m_nPlayerHealth > 0) m_nPlayerHealth--;
+			if (!m_bPlayerShieldActive)
+			{
+				MakeExplosion(xmf3Player);
+				if (m_nPlayerHealth > 0) m_nPlayerHealth--;
+			}
 			m_ppEnemyTankShellObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
 			m_bEnemyTankShellActive[i] = false;
 			continue;
@@ -970,6 +974,59 @@ void CScene::UpdateUltimateGaugeObjects(CCamera* pCamera)
 }
 
 // 궁극기 발사
+void CScene::UpdatePlayerShield(float fTimeElapsed)
+{
+	if (!m_pPlayer) return;
+
+	if (m_bPlayerShieldActive)
+	{
+		m_fPlayerShieldTime -= fTimeElapsed;
+		if (m_fPlayerShieldTime <= 0.0f)
+		{
+			m_bPlayerShieldActive = false;
+			m_fPlayerShieldTime = 0.0f;
+		}
+	}
+
+	if (!m_bPlayerShieldActive)
+	{
+		for (int i = 0; i < 12; i++) if (m_ppShieldObjects[i]) m_ppShieldObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
+		return;
+	}
+
+	XMFLOAT3 xmf3Center = m_pPlayer->GetPosition();
+	XMFLOAT3 xmf3Right = Vector3::Normalize(m_pPlayer->GetRightVector());
+	XMFLOAT3 xmf3Up = Vector3::Normalize(m_pPlayer->GetUpVector());
+	XMFLOAT3 xmf3Look = Vector3::Normalize(m_pPlayer->GetLookVector());
+
+	const float fHalfX = 55.0f;
+	const float fHalfY = 38.0f;
+	const float fHalfZ = 65.0f;
+	for (int i = 0; i < 12; i++)
+	{
+		if (!m_ppShieldObjects[i]) continue;
+
+		float sx = (i & 1) ? 1.0f : -1.0f;
+		float sy = (i & 2) ? 1.0f : -1.0f;
+		float sz = (i & 4) ? 1.0f : -1.0f;
+		XMFLOAT3 xmf3Position = xmf3Center;
+		if (i < 8)
+		{
+			xmf3Position = Vector3::Add(xmf3Position, xmf3Right, sx * fHalfX);
+			xmf3Position = Vector3::Add(xmf3Position, xmf3Up, sy * fHalfY);
+			xmf3Position = Vector3::Add(xmf3Position, xmf3Look, sz * fHalfZ);
+		}
+		else
+		{
+			float fAngle = XM_2PI * ((i - 8) / 4.0f);
+			xmf3Position = Vector3::Add(xmf3Position, xmf3Right, cosf(fAngle) * fHalfX);
+			xmf3Position = Vector3::Add(xmf3Position, xmf3Look, sinf(fAngle) * fHalfZ);
+			xmf3Position = Vector3::Add(xmf3Position, xmf3Up, fHalfY * 0.15f);
+		}
+		m_ppShieldObjects[i]->SetPosition(xmf3Position);
+		m_ppShieldObjects[i]->Rotate(0.0f, 90.0f * fTimeElapsed, 0.0f);
+	}
+}
 void CScene::UpdateHealthObjects(CCamera* pCamera)
 {
 	if (!pCamera) return;
@@ -1070,6 +1127,11 @@ void CScene::ReleaseObjects()
 		if (m_ppHealthObjects[i]) delete m_ppHealthObjects[i];
 		m_ppHealthObjects[i] = NULL;
 	}
+	for (int i = 0; i < 12; i++)
+	{
+		if (m_ppShieldObjects[i]) delete m_ppShieldObjects[i];
+		m_ppShieldObjects[i] = NULL;
+	}
 
 	ReleaseSceneObjects(m_ppTitleObjects, m_nTitleObjects);
 	m_ppTitleObjects = NULL;
@@ -1157,6 +1219,7 @@ void CScene::ReleaseUploadBuffers()
 	for (int i = 0; i < 10; i++) if (m_ppCoinObjects[i]) m_ppCoinObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < 10; i++) if (m_ppUltimateGaugeObjects[i]) m_ppUltimateGaugeObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < 10; i++) if (m_ppHealthObjects[i]) m_ppHealthObjects[i]->ReleaseUploadBuffers();
+	for (int i = 0; i < 12; i++) if (m_ppShieldObjects[i]) m_ppShieldObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < 10; i++) if (m_ppUltimateBulletObjects[i]) m_ppUltimateBulletObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < 16; i++) if (m_ppExplosionObjects[i]) m_ppExplosionObjects[i]->ReleaseUploadBuffers();
 }
@@ -1310,6 +1373,9 @@ void CScene::BeginLevel2()
 	 m_bAutoAttack = false;
 	 m_fAutoAttackTimer = 0.0f;
 	 if (m_pSelectedEnemyMarker) m_pSelectedEnemyMarker->SetPosition(0.0f, -10000.0f, 0.0f);
+	 m_bPlayerShieldActive = false;
+	 m_fPlayerShieldTime = 0.0f;
+	 for (int i = 0; i < 12; i++) if (m_ppShieldObjects[i]) m_ppShieldObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
 	 m_bUltimateFiring = false;
 
 	 if (m_pPlayer && m_pTerrain)
@@ -1421,6 +1487,13 @@ bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 // Level1에서 ESC키 입력 시 메뉴 화면으로 전환
 bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
+	if ((nMessageID == WM_KEYUP) && ((wParam == 'S') || (wParam == 's')) && (m_GameState.m_nScene == GAME_SCENE_LEVEL2))
+	{
+		m_bPlayerShieldActive = true;
+		m_fPlayerShieldTime = 2.0f;
+		return(true);
+	}
+
 	if ((nMessageID == WM_KEYUP) && ((wParam == 'A') || (wParam == 'a')) && (m_GameState.m_nScene == GAME_SCENE_LEVEL2))
 	{
 		if ((m_nSelectedEnemyTank >= 0) && (m_nSelectedEnemyTank < 10) && m_bEnemyTankActive[m_nSelectedEnemyTank])
@@ -1448,6 +1521,9 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 		m_nSelectedEnemyTank = -1;
 		m_bAutoAttack = false;
 		if (m_pSelectedEnemyMarker) m_pSelectedEnemyMarker->SetPosition(0.0f, -10000.0f, 0.0f);
+		m_bPlayerShieldActive = false;
+		m_fPlayerShieldTime = 0.0f;
+		for (int i = 0; i < 12; i++) if (m_ppShieldObjects[i]) m_ppShieldObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
 
 		ResetMenuCamera();
 
@@ -1535,6 +1611,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 		UpdateEnemyTankAttacks(fTimeElapsed);
 		UpdatePlayerShell(fTimeElapsed);
 		UpdateEnemyTankShells(fTimeElapsed);
+		UpdatePlayerShield(fTimeElapsed);
 		UpdateLevel2Explosions(fTimeElapsed);
 		for (int i = 0; i < m_nLevel2Objects; i++) if (m_ppLevel2Objects[i]) m_ppLevel2Objects[i]->UpdateTransform(NULL);
 		for (int i = 0; i < 10; i++)
@@ -1555,6 +1632,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 		if (m_pPlayerShell) m_pPlayerShell->UpdateTransform(NULL);
 		if (m_pSelectedEnemyMarker) m_pSelectedEnemyMarker->UpdateTransform(NULL);
 		for (int i = 0; i < 10; i++) if (m_ppEnemyTankShellObjects[i]) m_ppEnemyTankShellObjects[i]->UpdateTransform(NULL);
+		for (int i = 0; i < 12; i++) if (m_ppShieldObjects[i]) m_ppShieldObjects[i]->UpdateTransform(NULL);
 		for (int i = 0; i < 16; i++) if (m_ppExplosionObjects[i]) m_ppExplosionObjects[i]->UpdateTransform(NULL);
 		return;
 	}
@@ -1803,6 +1881,7 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 		if (m_bPlayerShellActive && m_pPlayerShell) m_pPlayerShell->Render(pd3dCommandList, pCamera);
 		for (int i = 0; i < 10; i++) if (m_bEnemyTankShellActive[i] && m_ppEnemyTankShellObjects[i]) m_ppEnemyTankShellObjects[i]->Render(pd3dCommandList, pCamera);
 		if (m_pSelectedEnemyMarker && (m_nSelectedEnemyTank >= 0)) m_pSelectedEnemyMarker->Render(pd3dCommandList, pCamera);
+		for (int i = 0; i < 12; i++) if (m_bPlayerShieldActive && m_ppShieldObjects[i]) m_ppShieldObjects[i]->Render(pd3dCommandList, pCamera);
 		UpdateHealthObjects(pCamera);
 		for (int i = 0; i < 10; i++) if (m_ppHealthObjects[i]) m_ppHealthObjects[i]->Render(pd3dCommandList, pCamera);
 		for (int i = 0; i < 16; i++) if (m_pfExplosionTime[i] > 0.0f) m_ppExplosionObjects[i]->Render(pd3dCommandList, pCamera);
