@@ -406,38 +406,55 @@ void CScene::BuildLevel2Objects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandL
 		"Models/Meshes/ams_house6.bin"
 	};
 
+	struct LEVEL2_PLACEMENT { float x, z, yaw, scale; };
+	const LEVEL2_PLACEMENT pHousePlacements[nLevel2HouseObjects] =
+	{
+		{ 260.0f, 300.0f, 15.0f, 10.0f }, { 380.0f, 520.0f, -20.0f, 9.0f }, { 250.0f, 760.0f, 35.0f, 11.0f }, { 430.0f, 900.0f, 70.0f, 8.5f }, { 300.0f, 1240.0f, -45.0f, 10.5f },
+		{ 470.0f, 1500.0f, 25.0f, 9.5f }, { 260.0f, 1760.0f, 80.0f, 12.0f }, { 720.0f, 260.0f, -35.0f, 9.0f }, { 900.0f, 380.0f, 40.0f, 11.5f }, { 1120.0f, 260.0f, 10.0f, 8.5f },
+		{ 1320.0f, 420.0f, -65.0f, 10.0f }, { 1560.0f, 280.0f, 30.0f, 12.0f }, { 1780.0f, 520.0f, -15.0f, 9.0f }, { 620.0f, 720.0f, 55.0f, 8.5f }, { 820.0f, 780.0f, -30.0f, 10.5f },
+		{ 1220.0f, 740.0f, 75.0f, 9.0f }, { 1460.0f, 820.0f, -50.0f, 11.0f }, { 1700.0f, 760.0f, 20.0f, 10.0f }, { 560.0f, 1120.0f, -10.0f, 9.5f }, { 760.0f, 1240.0f, 65.0f, 11.5f },
+		{ 1250.0f, 1120.0f, -40.0f, 10.0f }, { 1470.0f, 1200.0f, 45.0f, 8.5f }, { 1720.0f, 1120.0f, 5.0f, 12.0f }, { 620.0f, 1620.0f, 35.0f, 9.0f }, { 860.0f, 1740.0f, -75.0f, 10.5f },
+		{ 1120.0f, 1640.0f, 20.0f, 11.5f }, { 1380.0f, 1760.0f, -25.0f, 9.0f }, { 1640.0f, 1600.0f, 60.0f, 10.0f }, { 980.0f, 620.0f, -55.0f, 8.5f }, { 1080.0f, 860.0f, 30.0f, 9.5f },
+		{ 980.0f, 1320.0f, 70.0f, 11.0f }, { 1160.0f, 1450.0f, -30.0f, 8.5f }, { 1420.0f, 620.0f, 15.0f, 10.5f }, { 1600.0f, 980.0f, -70.0f, 9.0f }, { 520.0f, 420.0f, 40.0f, 10.0f },
+		{ 680.0f, 520.0f, -15.0f, 8.5f }, { 380.0f, 1140.0f, 55.0f, 11.0f }, { 540.0f, 1380.0f, -35.0f, 9.0f }, { 760.0f, 960.0f, 25.0f, 10.5f }, { 920.0f, 1080.0f, -50.0f, 8.5f },
+		{ 1180.0f, 980.0f, 35.0f, 9.5f }, { 1340.0f, 1380.0f, -15.0f, 11.0f }, { 1500.0f, 1460.0f, 65.0f, 10.0f }, { 1760.0f, 1360.0f, -45.0f, 8.5f }, { 330.0f, 420.0f, 10.0f, 9.5f },
+		{ 470.0f, 660.0f, -60.0f, 10.0f }, { 700.0f, 1440.0f, 45.0f, 9.0f }, { 1500.0f, 400.0f, 80.0f, 10.5f }, { 1840.0f, 1740.0f, -25.0f, 11.0f }, { 1840.0f, 300.0f, 25.0f, 8.5f }
+	};
+
 	for (int i = 0; i < nLevel2HouseObjects; i++)
 	{
-		float x = RandomRange(220.0f, m_pTerrain->GetWidth() - 220.0f);
-		float z = RandomRange(220.0f, m_pTerrain->GetLength() - 220.0f);
-		float fYaw = RandomRange(0.0f, 360.0f);
-		float fScale = RandomRange(8.0f, 13.0f);
-
-		m_ppLevel2Objects[i] = CreateHouseObject(pd3dDevice, pd3dCommandList, ppstrHouseFiles[i % 4], x, z, fScale, fYaw, m_pTerrain);
+		m_ppLevel2Objects[i] = CreateHouseObject(pd3dDevice, pd3dCommandList, ppstrHouseFiles[i % 4], pHousePlacements[i].x, pHousePlacements[i].z, pHousePlacements[i].scale, pHousePlacements[i].yaw, m_pTerrain);
 	}
+
+	const LEVEL2_PLACEMENT pTreePlacements[nLevel2TreeObjects] =
+	{
+		{ 520.0f, 250.0f, 10.0f, 6.0f }, { 250.0f, 1040.0f, 80.0f, 5.5f }, { 520.0f, 1840.0f, 30.0f, 7.0f }, { 1040.0f, 250.0f, -20.0f, 6.5f },
+		{ 1840.0f, 840.0f, 55.0f, 5.5f }, { 250.0f, 1500.0f, -40.0f, 6.0f }, { 1040.0f, 1840.0f, 75.0f, 7.0f }, { 1840.0f, 1240.0f, 15.0f, 6.5f }
+	};
 
 	for (int i = 0; i < nLevel2TreeObjects; i++)
 	{
 		int nObject = nLevel2HouseObjects + i;
-		float x = RandomRange(220.0f, m_pTerrain->GetWidth() - 220.0f);
-		float z = RandomRange(220.0f, m_pTerrain->GetLength() - 220.0f);
-		float fYaw = RandomRange(0.0f, 360.0f);
-		float fScale = RandomRange(5.0f, 8.0f);
-
 		CGameObject* pTree = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"Model/Tree.txt");
-		pTree->SetScale(fScale, fScale, fScale);
-		pTree->Rotate(0.0f, fYaw, 0.0f);
-		pTree->SetPosition(x, TerrainY(m_pTerrain, x, z, 0.0f), z);
+		pTree->SetScale(pTreePlacements[i].scale, pTreePlacements[i].scale, pTreePlacements[i].scale);
+		pTree->Rotate(0.0f, pTreePlacements[i].yaw, 0.0f);
+		pTree->SetPosition(pTreePlacements[i].x, TerrainY(m_pTerrain, pTreePlacements[i].x, pTreePlacements[i].z, 0.0f), pTreePlacements[i].z);
 		m_ppLevel2Objects[nObject] = pTree;
 	}
-}
-void CScene::BuildLevel2EnemyTanks(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
+}void CScene::BuildLevel2EnemyTanks(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
 {
+	struct LEVEL2_TANK_PLACEMENT { float x, z, yaw; };
+	const LEVEL2_TANK_PLACEMENT pTankPlacements[10] =
+	{
+		{ 1030.0f, 520.0f, 180.0f }, { 520.0f, 1030.0f, 90.0f }, { 1520.0f, 1030.0f, -90.0f }, { 1030.0f, 1520.0f, 0.0f }, { 700.0f, 700.0f, 135.0f },
+		{ 1420.0f, 700.0f, -135.0f }, { 700.0f, 1420.0f, 45.0f }, { 1420.0f, 1420.0f, -45.0f }, { 1780.0f, 1780.0f, -35.0f }, { 1780.0f, 260.0f, 220.0f }
+	};
+
 	for (int i = 0; i < 10; i++)
 	{
-		float x = RandomRange(260.0f, m_pTerrain->GetWidth() - 260.0f);
-		float z = RandomRange(260.0f, m_pTerrain->GetLength() - 260.0f);
-		float fYaw = RandomRange(0.0f, 360.0f);
+		float x = pTankPlacements[i].x;
+		float z = pTankPlacements[i].z;
+		float fYaw = pTankPlacements[i].yaw;
 
 		CGameObject* pEnemyTank = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, L"Model/AbramsTank.txt");
 		pEnemyTank->SetScale(11.0f, 11.0f, 11.0f);
@@ -453,8 +470,7 @@ void CScene::BuildLevel2EnemyTanks(ID3D12Device* pd3dDevice, ID3D12GraphicsComma
 		m_ppEnemyTankLodObjects[i] = pEnemyTankLod;
 		m_bEnemyTankActive[i] = true;
 	}
-}
-void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
+}void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
 {
 	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDevice);
 
@@ -517,7 +533,10 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 		m_bHouseActive[i - 3] = false;
 	}
 	m_pBomb = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 0.15f, 0.1f, 1.0f), 8.0f);
-	m_pPlayerShell = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 1.1f, 0.15f, 1.0f), 5.0f);
+	m_pPlayerShell = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 1.4f, 0.1f, 1.0f), 8.0f);
+	if (m_pPlayerShell) m_pPlayerShell->SetScale(1.8f, 0.75f, 0.75f);
+	m_pSelectedEnemyMarker = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 3.2f, 0.1f, 1.0f), 10.0f);
+	m_pSelectedEnemyMarker->SetScale(2.4f, 0.25f, 2.4f);
 	for (int i = 0; i < 10; i++) m_ppCoinObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 3.0f, 0.1f, 1.0f), 1.4f);
 	for (int i = 0; i < 10; i++) m_ppUltimateGaugeObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 0.1f, 0.1f, 1.0f), 2.0f);
 	for (int i = 0; i < 10; i++) m_ppUltimateBulletObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 0.1f, 0.1f, 1.0f), 6.0f);
@@ -553,12 +572,141 @@ void CScene::FirePlayerShell()
 	xmf3Position = Vector3::Add(xmf3Position, xmf3Up, 30.0f);
 
 	m_pPlayerShell->SetPosition(xmf3Position);
-	m_xmf3PlayerShellVelocity = Vector3::ScalarProduct(xmf3Look, 430.0f, false);
-	m_xmf3PlayerShellVelocity.y += 18.0f;
+	m_xmf3PlayerShellVelocity = Vector3::ScalarProduct(xmf3Look, 280.0f, false);
+	m_xmf3PlayerShellVelocity.y += 15.0f;
 	m_fPlayerShellLifeTime = 0.0f;
 	m_bPlayerShellActive = true;
 }
 
+void CScene::FirePlayerShellAtSelectedEnemy()
+{
+	if (!m_pPlayer || !m_pPlayerShell || m_bPlayerShellActive) return;
+	if ((m_nSelectedEnemyTank < 0) || (m_nSelectedEnemyTank >= 10) || !m_bEnemyTankActive[m_nSelectedEnemyTank]) return;
+
+	XMFLOAT3 xmf3Player = m_pPlayer->GetPosition();
+	XMFLOAT3 xmf3Target = m_ppEnemyTankObjects[m_nSelectedEnemyTank]->GetPosition();
+	xmf3Target.y += 24.0f;
+
+	XMFLOAT3 xmf3Look = Vector3::Subtract(xmf3Target, xmf3Player);
+	xmf3Look.y = 0.0f;
+	if (Vector3::Length(xmf3Look) < 1.0f) return;
+	xmf3Look = Vector3::Normalize(xmf3Look);
+
+	XMFLOAT3 xmf3Up = Vector3::Normalize(m_pPlayer->GetUpVector());
+	XMFLOAT3 xmf3Right = Vector3::CrossProduct(xmf3Up, xmf3Look, true);
+	if (Vector3::Length(xmf3Right) < 0.001f) xmf3Right = XMFLOAT3(1.0f, 0.0f, 0.0f);
+	xmf3Up = Vector3::CrossProduct(xmf3Look, xmf3Right, true);
+	m_pPlayer->SetOrientation(xmf3Right, xmf3Up, xmf3Look);
+
+	XMFLOAT3 xmf3Start = Vector3::Add(xmf3Player, xmf3Look, 82.0f);
+	xmf3Start = Vector3::Add(xmf3Start, xmf3Up, 30.0f);
+
+	XMFLOAT3 xmf3Direction = Vector3::Subtract(xmf3Target, xmf3Start);
+	if (Vector3::Length(xmf3Direction) < 1.0f) return;
+	xmf3Direction = Vector3::Normalize(xmf3Direction);
+
+	m_pPlayerShell->SetPosition(xmf3Start);
+	float fFlightTime = Vector3::Length(Vector3::Subtract(xmf3Target, xmf3Start)) / 280.0f;
+	m_xmf3PlayerShellVelocity = Vector3::ScalarProduct(xmf3Direction, 280.0f, false);
+	m_xmf3PlayerShellVelocity.y += (32.5f * fFlightTime) + 12.0f;
+	m_fPlayerShellLifeTime = 0.0f;
+	m_bPlayerShellActive = true;
+}
+void CScene::UpdateAutoAttack(float fTimeElapsed)
+{
+	if (!m_bAutoAttack) return;
+	if ((m_nSelectedEnemyTank < 0) || (m_nSelectedEnemyTank >= 10) || !m_bEnemyTankActive[m_nSelectedEnemyTank])
+	{
+		m_bAutoAttack = false;
+		m_nSelectedEnemyTank = -1;
+		if (m_pSelectedEnemyMarker) m_pSelectedEnemyMarker->SetPosition(0.0f, -10000.0f, 0.0f);
+		return;
+	}
+
+	m_fAutoAttackTimer -= fTimeElapsed;
+	if ((m_fAutoAttackTimer <= 0.0f) && !m_bPlayerShellActive)
+	{
+		FirePlayerShellAtSelectedEnemy();
+		m_fAutoAttackTimer = 1.25f;
+	}
+}
+
+void CScene::UpdateLevel2Explosions(float fTimeElapsed)
+{
+	for (int i = 0; i < 16; i++)
+	{
+		if (m_pfExplosionTime[i] > 0.0f)
+		{
+			m_pfExplosionTime[i] -= fTimeElapsed;
+			XMFLOAT3 xmf3Position = m_ppExplosionObjects[i]->GetPosition();
+			xmf3Position = Vector3::Add(xmf3Position, m_pxmf3ExplosionVelocity[i], fTimeElapsed);
+			m_pxmf3ExplosionVelocity[i].y -= 160.0f * fTimeElapsed;
+			m_ppExplosionObjects[i]->SetPosition(xmf3Position);
+		}
+		else if (m_ppExplosionObjects[i])
+		{
+			m_ppExplosionObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
+		}
+	}
+}
+
+void CScene::SelectEnemyTankFromMouse(HWND hWnd, LPARAM lParam)
+{
+	if ((m_GameState.m_nScene != GAME_SCENE_LEVEL2) || !m_pPlayer) return;
+	CCamera* pCamera = m_pPlayer->GetCamera();
+	if (!pCamera) return;
+
+	RECT rcClient;
+	::GetClientRect(hWnd, &rcClient);
+	float fWidth = float(rcClient.right - rcClient.left);
+	float fHeight = float(rcClient.bottom - rcClient.top);
+	if ((fWidth <= 0.0f) || (fHeight <= 0.0f)) return;
+
+	float fMouseX = float(LOWORD(lParam));
+	float fMouseY = float(HIWORD(lParam));
+	XMFLOAT4X4 xmf4x4View = pCamera->GetViewMatrix();
+	XMFLOAT4X4 xmf4x4Projection = pCamera->GetProjectionMatrix();
+	XMMATRIX xmmtxView = XMLoadFloat4x4(&xmf4x4View);
+	XMMATRIX xmmtxProjection = XMLoadFloat4x4(&xmf4x4Projection);
+	XMMATRIX xmmtxWorld = XMMatrixIdentity();
+
+	int nBestTank = -1;
+	float fBestDistance = 95.0f;
+	for (int i = 0; i < 10; i++)
+	{
+		if (!m_bEnemyTankActive[i] || !m_ppEnemyTankObjects[i]) continue;
+
+		XMFLOAT3 xmf3Tank = m_ppEnemyTankObjects[i]->GetPosition();
+		xmf3Tank.y += 28.0f;
+		XMVECTOR xmvProjected = XMVector3Project(XMLoadFloat3(&xmf3Tank), 0.0f, 0.0f, fWidth, fHeight, 0.0f, 1.0f, xmmtxProjection, xmmtxView, xmmtxWorld);
+		XMFLOAT3 xmf3Screen;
+		XMStoreFloat3(&xmf3Screen, xmvProjected);
+		if ((xmf3Screen.z < 0.0f) || (xmf3Screen.z > 1.0f)) continue;
+
+		float dx = xmf3Screen.x - fMouseX;
+		float dy = xmf3Screen.y - fMouseY;
+		float fDistance = sqrtf((dx * dx) + (dy * dy));
+		if (fDistance < fBestDistance)
+		{
+			fBestDistance = fDistance;
+			nBestTank = i;
+		}
+	}
+
+	m_nSelectedEnemyTank = nBestTank;
+	m_bAutoAttack = false;
+	m_fAutoAttackTimer = 0.0f;
+	if ((m_nSelectedEnemyTank >= 0) && m_pSelectedEnemyMarker)
+	{
+		XMFLOAT3 xmf3Marker = m_ppEnemyTankObjects[m_nSelectedEnemyTank]->GetPosition();
+		xmf3Marker.y += 66.0f;
+		m_pSelectedEnemyMarker->SetPosition(xmf3Marker);
+	}
+	else if (m_pSelectedEnemyMarker)
+	{
+		m_pSelectedEnemyMarker->SetPosition(0.0f, -10000.0f, 0.0f);
+	}
+}
 void CScene::UpdatePlayerShell(float fTimeElapsed)
 {
 	if (!m_bPlayerShellActive || !m_pPlayerShell) return;
@@ -569,8 +717,31 @@ void CScene::UpdatePlayerShell(float fTimeElapsed)
 	m_xmf3PlayerShellVelocity.y -= 65.0f * fTimeElapsed;
 	m_pPlayerShell->SetPosition(xmf3Shell);
 
+		for (int i = 0; i < 10; i++)
+	{
+		if (!m_bEnemyTankActive[i] || !m_ppEnemyTankObjects[i]) continue;
+		XMFLOAT3 xmf3Tank = m_ppEnemyTankObjects[i]->GetPosition();
+		if ((m_fPlayerShellLifeTime > 0.18f) && (DistanceXZ(xmf3Shell, xmf3Tank) < 48.0f) && (xmf3Shell.y >= (xmf3Tank.y - 8.0f)) && (xmf3Shell.y <= (xmf3Tank.y + 70.0f)))
+		{
+			XMFLOAT3 xmf3Explosion = xmf3Tank;
+			xmf3Explosion.y += 25.0f;
+			MakeExplosion(xmf3Explosion);
+			m_bEnemyTankActive[i] = false;
+			m_ppEnemyTankObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
+			if (m_ppEnemyTankLodObjects[i]) m_ppEnemyTankLodObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
+			if (m_nSelectedEnemyTank == i)
+			{
+				m_nSelectedEnemyTank = -1;
+				m_bAutoAttack = false;
+				if (m_pSelectedEnemyMarker) m_pSelectedEnemyMarker->SetPosition(0.0f, -10000.0f, 0.0f);
+			}
+			m_pPlayerShell->SetPosition(0.0f, -10000.0f, 0.0f);
+			m_bPlayerShellActive = false;
+			return;
+		}
+	}
 	float fGround = (m_pTerrain) ? m_pTerrain->GetHeight(xmf3Shell.x, xmf3Shell.z) : -10000.0f;
-	if ((m_fPlayerShellLifeTime > 3.0f) || (xmf3Shell.y <= (fGround + 3.0f)))
+	if ((m_fPlayerShellLifeTime > 6.0f) || (xmf3Shell.y <= (fGround + 3.0f)))
 	{
 		m_pPlayerShell->SetPosition(0.0f, -10000.0f, 0.0f);
 		m_bPlayerShellActive = false;
@@ -716,6 +887,8 @@ void CScene::ReleaseObjects()
 	m_pBomb = NULL;
 	if (m_pPlayerShell) delete m_pPlayerShell;
 	m_pPlayerShell = NULL;
+	if (m_pSelectedEnemyMarker) delete m_pSelectedEnemyMarker;
+	m_pSelectedEnemyMarker = NULL;
 
 	ReleaseSceneObjects(m_ppTitleObjects, m_nTitleObjects);
 	m_ppTitleObjects = NULL;
@@ -798,6 +971,7 @@ void CScene::ReleaseUploadBuffers()
 	for (int i = 0; i < m_nGameClearObjects; i++) if (m_ppGameClearObjects[i]) m_ppGameClearObjects[i]->ReleaseUploadBuffers();
 	if (m_pBomb) m_pBomb->ReleaseUploadBuffers();
 	if (m_pPlayerShell) m_pPlayerShell->ReleaseUploadBuffers();
+	if (m_pSelectedEnemyMarker) m_pSelectedEnemyMarker->ReleaseUploadBuffers();
 	for (int i = 0; i < 10; i++) if (m_ppCoinObjects[i]) m_ppCoinObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < 10; i++) if (m_ppUltimateGaugeObjects[i]) m_ppUltimateGaugeObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < 10; i++) if (m_ppUltimateBulletObjects[i]) m_ppUltimateBulletObjects[i]->ReleaseUploadBuffers();
@@ -841,6 +1015,10 @@ void CScene::ResetLevelState()
 	m_bPlayerShellActive = false;
 	m_bPlayerShellKeyDown = false;
 	m_fPlayerShellLifeTime = 0.0f;
+	m_nSelectedEnemyTank = -1;
+	m_bAutoAttack = false;
+	m_fAutoAttackTimer = 0.0f;
+	if (m_pSelectedEnemyMarker) m_pSelectedEnemyMarker->SetPosition(0.0f, -10000.0f, 0.0f);
 	for (int i = 0; i < 10; i++)
 	{
 		if (m_ppCoinObjects[i])
@@ -937,6 +1115,10 @@ void CScene::BeginLevel2()
 	 m_bBombActive = false;
 	 m_bPlayerShellActive = false;
 	 if (m_pPlayerShell) m_pPlayerShell->SetPosition(0.0f, -10000.0f, 0.0f);
+	 m_nSelectedEnemyTank = -1;
+	 m_bAutoAttack = false;
+	 m_fAutoAttackTimer = 0.0f;
+	 if (m_pSelectedEnemyMarker) m_pSelectedEnemyMarker->SetPosition(0.0f, -10000.0f, 0.0f);
 	 m_bUltimateFiring = false;
 
 	 if (m_pPlayer && m_pTerrain)
@@ -988,6 +1170,12 @@ void CScene::StartTitleNameExplosion()
 // 현재 게임 상태에 따라 마우스 클릭으로 이름, START, MENU 버튼 입력을 처리
 bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
+	if ((nMessageID == WM_RBUTTONDOWN) && (m_GameState.m_nScene == GAME_SCENE_LEVEL2))
+	{
+		SelectEnemyTankFromMouse(hWnd, lParam);
+		return(true);
+	}
+
 	if (nMessageID == WM_LBUTTONDOWN)
 	{
 		m_GameState.m_bMouseDown = true;
@@ -1042,6 +1230,16 @@ bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 // Level1에서 ESC키 입력 시 메뉴 화면으로 전환
 bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
+	if ((nMessageID == WM_KEYUP) && ((wParam == 'A') || (wParam == 'a')) && (m_GameState.m_nScene == GAME_SCENE_LEVEL2))
+	{
+		if ((m_nSelectedEnemyTank >= 0) && (m_nSelectedEnemyTank < 10) && m_bEnemyTankActive[m_nSelectedEnemyTank])
+		{
+			m_bAutoAttack = !m_bAutoAttack;
+			m_fAutoAttackTimer = 0.0f;
+		}
+		return(true);
+	}
+
 	if ((nMessageID == WM_KEYUP) && (wParam == 'N') && (m_GameState.m_nScene == GAME_SCENE_LEVEL1))
 	{
 		BeginLevel2();
@@ -1056,6 +1254,9 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 		m_bPlayerShellKeyDown = false;
 		m_bPlayerShellActive = false;
 		if (m_pPlayerShell) m_pPlayerShell->SetPosition(0.0f, -10000.0f, 0.0f);
+		m_nSelectedEnemyTank = -1;
+		m_bAutoAttack = false;
+		if (m_pSelectedEnemyMarker) m_pSelectedEnemyMarker->SetPosition(0.0f, -10000.0f, 0.0f);
 
 		ResetMenuCamera();
 
@@ -1139,17 +1340,30 @@ void CScene::AnimateObjects(float fTimeElapsed)
 
 	if (m_GameState.m_nScene == GAME_SCENE_LEVEL2)
 	{
+		UpdateAutoAttack(fTimeElapsed);
 		UpdatePlayerShell(fTimeElapsed);
+		UpdateLevel2Explosions(fTimeElapsed);
 		for (int i = 0; i < m_nLevel2Objects; i++) if (m_ppLevel2Objects[i]) m_ppLevel2Objects[i]->UpdateTransform(NULL);
 		for (int i = 0; i < 10; i++)
 		{
 			if (m_ppEnemyTankObjects[i]) m_ppEnemyTankObjects[i]->UpdateTransform(NULL);
 			if (m_ppEnemyTankLodObjects[i]) m_ppEnemyTankLodObjects[i]->UpdateTransform(NULL);
 		}
+		if ((m_nSelectedEnemyTank >= 0) && (m_nSelectedEnemyTank < 10) && m_bEnemyTankActive[m_nSelectedEnemyTank] && m_pSelectedEnemyMarker)
+		{
+			XMFLOAT3 xmf3Marker = m_ppEnemyTankObjects[m_nSelectedEnemyTank]->GetPosition();
+			xmf3Marker.y += 66.0f;
+			m_pSelectedEnemyMarker->SetPosition(xmf3Marker);
+		}
+		else if (m_pSelectedEnemyMarker)
+		{
+			m_pSelectedEnemyMarker->SetPosition(0.0f, -10000.0f, 0.0f);
+		}
 		if (m_pPlayerShell) m_pPlayerShell->UpdateTransform(NULL);
+		if (m_pSelectedEnemyMarker) m_pSelectedEnemyMarker->UpdateTransform(NULL);
+		for (int i = 0; i < 16; i++) if (m_ppExplosionObjects[i]) m_ppExplosionObjects[i]->UpdateTransform(NULL);
 		return;
 	}
-
 	// Level1의 게임 오브젝트 갱신
 	for (int i = 0; i < m_nGameObjects; i++) m_ppGameObjects[i]->Animate(fTimeElapsed, NULL);
 
@@ -1382,17 +1596,19 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 			if (!m_bEnemyTankActive[i]) continue;
 
 			float fDistance = DistanceXZFromCamera(pCamera, m_ppEnemyTankObjects[i]);
-			if ((fDistance < 260.0f) && IsInFrontOfCamera(pCamera, m_ppEnemyTankObjects[i], 120.0f))
+			if ((fDistance < 520.0f) && IsInFrontOfCamera(pCamera, m_ppEnemyTankObjects[i], 180.0f))
 			{
 				m_ppEnemyTankObjects[i]->Render(pd3dCommandList, pCamera);
 			}
-			else if ((fDistance < 700.0f) && IsInFrontOfCamera(pCamera, m_ppEnemyTankLodObjects[i], 160.0f))
+			else if ((fDistance < 1050.0f) && IsInFrontOfCamera(pCamera, m_ppEnemyTankLodObjects[i], 220.0f))
 			{
 				m_ppEnemyTankLodObjects[i]->Render(pd3dCommandList, pCamera);
 			}
 		}
 
 		if (m_bPlayerShellActive && m_pPlayerShell) m_pPlayerShell->Render(pd3dCommandList, pCamera);
+		if (m_pSelectedEnemyMarker && (m_nSelectedEnemyTank >= 0)) m_pSelectedEnemyMarker->Render(pd3dCommandList, pCamera);
+		for (int i = 0; i < 16; i++) if (m_pfExplosionTime[i] > 0.0f) m_ppExplosionObjects[i]->Render(pd3dCommandList, pCamera);
 		return;
 	}
 
