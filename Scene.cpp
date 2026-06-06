@@ -1395,7 +1395,8 @@ void CScene::BeginLevel2()
 		 if (m_ppEnemyTankObjects[i]) m_ppEnemyTankObjects[i]->SetPosition(x, TerrainY(m_pTerrain, x, z, 18.0f), z);
 		 if (m_ppEnemyTankLodObjects[i]) m_ppEnemyTankLodObjects[i]->SetPosition(x, TerrainY(m_pTerrain, x, z, 18.0f), z);
 		 if (m_ppEnemyTankShellObjects[i]) m_ppEnemyTankShellObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
-	 }m_bPlayerShieldActive = false;
+	 }
+	 m_bPlayerShieldActive = false;
 	 m_fPlayerShieldTime = 0.0f;
 	 for (int i = 0; i < 12; i++) if (m_ppShieldObjects[i]) m_ppShieldObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
 	 m_bUltimateFiring = false;
@@ -1488,6 +1489,11 @@ bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 				float fPlayerZ = m_pTerrain->GetLength() * 0.5f;
 				XMFLOAT3 xmf3PlayerPosition(fPlayerX, m_pTerrain->GetHeight(fPlayerX, fPlayerZ) + 70.0f, fPlayerZ);
 
+				m_pPlayer->ResetOrientation();
+				m_pPlayer->SetVelocity(XMFLOAT3(0.0f, 0.0f, 0.0f));
+				m_pPlayer->SetMaxVelocityXZ(150.0f);
+				m_pPlayer->SetMaxVelocityY(160.0f);
+				m_pPlayer->SetFriction(80.0f);
 				m_pPlayer->SetPosition(xmf3PlayerPosition);
 
 				CCamera* pCamera = m_pPlayer->GetCamera();

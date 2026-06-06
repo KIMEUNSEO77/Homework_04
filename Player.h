@@ -62,6 +62,7 @@ public:
 	void Move(float fxOffset = 0.0f, float fyOffset = 0.0f, float fzOffset = 0.0f);
 	void Rotate(float x, float y, float z);
 	void SetOrientation(const XMFLOAT3& xmf3Right, const XMFLOAT3& xmf3Up, const XMFLOAT3& xmf3Look);
+	void ResetOrientation();
 
 	void Update(float fTimeElapsed);
 
