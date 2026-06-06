@@ -811,25 +811,36 @@ void CScene::SelectEnemyTankFromMouse(HWND hWnd, LPARAM lParam)
 	XMMATRIX xmmtxProjection = XMLoadFloat4x4(&xmf4x4Projection);
 	XMMATRIX xmmtxWorld = XMMatrixIdentity();
 
+	XMVECTOR xmvNear = XMVector3Unproject(XMVectorSet(fMouseX, fMouseY, 0.0f, 1.0f), 0.0f, 0.0f, fWidth, fHeight, 0.0f, 1.0f, xmmtxProjection, xmmtxView, xmmtxWorld);
+	XMVECTOR xmvFar = XMVector3Unproject(XMVectorSet(fMouseX, fMouseY, 1.0f, 1.0f), 0.0f, 0.0f, fWidth, fHeight, 0.0f, 1.0f, xmmtxProjection, xmmtxView, xmmtxWorld);
+	XMFLOAT3 xmf3RayOrigin;
+	XMFLOAT3 xmf3RayDirection;
+	XMStoreFloat3(&xmf3RayOrigin, xmvNear);
+	XMStoreFloat3(&xmf3RayDirection, XMVector3Normalize(xmvFar - xmvNear));
+
 	int nBestTank = -1;
-	float fBestDistance = 95.0f;
+	float fBestHitDistance = 1000000.0f;
+	const float fTankPickRadius = 70.0f;
+
 	for (int i = 0; i < 10; i++)
 	{
 		if (!m_bEnemyTankActive[i] || !m_ppEnemyTankObjects[i]) continue;
 
-		XMFLOAT3 xmf3Tank = m_ppEnemyTankObjects[i]->GetPosition();
-		xmf3Tank.y += 28.0f;
-		XMVECTOR xmvProjected = XMVector3Project(XMLoadFloat3(&xmf3Tank), 0.0f, 0.0f, fWidth, fHeight, 0.0f, 1.0f, xmmtxProjection, xmmtxView, xmmtxWorld);
-		XMFLOAT3 xmf3Screen;
-		XMStoreFloat3(&xmf3Screen, xmvProjected);
-		if ((xmf3Screen.z < 0.0f) || (xmf3Screen.z > 1.0f)) continue;
+		XMFLOAT3 xmf3Center = m_ppEnemyTankObjects[i]->GetPosition();
+		xmf3Center.y += 28.0f;
+		XMFLOAT3 xmf3OriginToCenter = Vector3::Subtract(xmf3RayOrigin, xmf3Center);
+		float fB = Vector3::DotProduct(xmf3OriginToCenter, xmf3RayDirection);
+		float fC = Vector3::DotProduct(xmf3OriginToCenter, xmf3OriginToCenter) - (fTankPickRadius * fTankPickRadius);
+		if ((fC > 0.0f) && (fB > 0.0f)) continue;
 
-		float dx = xmf3Screen.x - fMouseX;
-		float dy = xmf3Screen.y - fMouseY;
-		float fDistance = sqrtf((dx * dx) + (dy * dy));
-		if (fDistance < fBestDistance)
+		float fDiscriminant = (fB * fB) - fC;
+		if (fDiscriminant < 0.0f) continue;
+
+		float fHitDistance = -fB - sqrtf(fDiscriminant);
+		if (fHitDistance < 0.0f) fHitDistance = 0.0f;
+		if (fHitDistance < fBestHitDistance)
 		{
-			fBestDistance = fDistance;
+			fBestHitDistance = fHitDistance;
 			nBestTank = i;
 		}
 	}
