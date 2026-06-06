@@ -544,6 +544,7 @@ void CScene::BuildLevel2Objects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandL
 	}
 	for (int i = 0; i < 10; i++) m_ppCoinObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 3.0f, 0.1f, 1.0f), 1.4f);
 	for (int i = 0; i < 10; i++) m_ppUltimateGaugeObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 0.1f, 0.1f, 1.0f), 2.0f);
+	for (int i = 0; i < 10; i++) m_ppHealthObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 0.0f, 0.0f, 1.0f), 2.2f);
 	for (int i = 0; i < 10; i++) m_ppUltimateBulletObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 0.1f, 0.1f, 1.0f), 6.0f);
 	for (int i = 0; i < 16; i++)
 	{
@@ -766,6 +767,7 @@ void CScene::UpdateEnemyTankShells(float fTimeElapsed)
 		if ((m_fEnemyTankShellLifeTime[i] > 0.18f) && (DistanceXZ(xmf3Shell, xmf3Player) < 38.0f) && (xmf3Shell.y >= (xmf3Player.y - 12.0f)) && (xmf3Shell.y <= (xmf3Player.y + 55.0f)))
 		{
 			MakeExplosion(xmf3Player);
+			if (m_nPlayerHealth > 0) m_nPlayerHealth--;
 			m_ppEnemyTankShellObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
 			m_bEnemyTankShellActive[i] = false;
 			continue;
@@ -968,6 +970,25 @@ void CScene::UpdateUltimateGaugeObjects(CCamera* pCamera)
 }
 
 // ±Ã±Ø±â ¹ß»ç
+void CScene::UpdateHealthObjects(CCamera* pCamera)
+{
+	if (!pCamera) return;
+
+	XMFLOAT3 xmf3Camera = pCamera->GetPosition();
+	XMFLOAT3 xmf3Look = pCamera->GetLookVector();
+	XMFLOAT3 xmf3Right = pCamera->GetRightVector();
+	XMFLOAT3 xmf3Up = pCamera->GetUpVector();
+
+	for (int i = 0; i < 10; i++)
+	{
+		if (!m_ppHealthObjects[i]) continue;
+		XMFLOAT3 xmf3Position = Vector3::Add(xmf3Camera, xmf3Look, 36.0f);
+		xmf3Position = Vector3::Add(xmf3Position, xmf3Right, -11.25f + (i * 2.5f));
+		xmf3Position = Vector3::Add(xmf3Position, xmf3Up, 13.5f);
+		if (i >= m_nPlayerHealth) xmf3Position.y -= 10000.0f;
+		m_ppHealthObjects[i]->SetPosition(xmf3Position);
+	}
+}
 void CScene::StartUltimateRain()
 {
 	if (!m_pPlayer || m_bUltimateFiring || m_bGameOver || m_bGameClear) return;
@@ -1044,6 +1065,11 @@ void CScene::ReleaseObjects()
 	m_pPlayerShell = NULL;
 	if (m_pSelectedEnemyMarker) delete m_pSelectedEnemyMarker;
 	m_pSelectedEnemyMarker = NULL;
+	for (int i = 0; i < 10; i++)
+	{
+		if (m_ppHealthObjects[i]) delete m_ppHealthObjects[i];
+		m_ppHealthObjects[i] = NULL;
+	}
 
 	ReleaseSceneObjects(m_ppTitleObjects, m_nTitleObjects);
 	m_ppTitleObjects = NULL;
@@ -1130,6 +1156,7 @@ void CScene::ReleaseUploadBuffers()
 	if (m_pSelectedEnemyMarker) m_pSelectedEnemyMarker->ReleaseUploadBuffers();
 	for (int i = 0; i < 10; i++) if (m_ppCoinObjects[i]) m_ppCoinObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < 10; i++) if (m_ppUltimateGaugeObjects[i]) m_ppUltimateGaugeObjects[i]->ReleaseUploadBuffers();
+	for (int i = 0; i < 10; i++) if (m_ppHealthObjects[i]) m_ppHealthObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < 10; i++) if (m_ppUltimateBulletObjects[i]) m_ppUltimateBulletObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < 16; i++) if (m_ppExplosionObjects[i]) m_ppExplosionObjects[i]->ReleaseUploadBuffers();
 }
@@ -1193,6 +1220,7 @@ void CScene::ResetLevelState()
 	for (int i = 0; i < 10; i++)
 	{
 		if (m_ppUltimateGaugeObjects[i]) m_ppUltimateGaugeObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
+		if (m_ppHealthObjects[i]) m_ppHealthObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
 		if (m_ppUltimateBulletObjects[i]) m_ppUltimateBulletObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
 		m_bUltimateBulletActive[i] = false;
 	}
@@ -1775,6 +1803,8 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 		if (m_bPlayerShellActive && m_pPlayerShell) m_pPlayerShell->Render(pd3dCommandList, pCamera);
 		for (int i = 0; i < 10; i++) if (m_bEnemyTankShellActive[i] && m_ppEnemyTankShellObjects[i]) m_ppEnemyTankShellObjects[i]->Render(pd3dCommandList, pCamera);
 		if (m_pSelectedEnemyMarker && (m_nSelectedEnemyTank >= 0)) m_pSelectedEnemyMarker->Render(pd3dCommandList, pCamera);
+		UpdateHealthObjects(pCamera);
+		for (int i = 0; i < 10; i++) if (m_ppHealthObjects[i]) m_ppHealthObjects[i]->Render(pd3dCommandList, pCamera);
 		for (int i = 0; i < 16; i++) if (m_pfExplosionTime[i] > 0.0f) m_ppExplosionObjects[i]->Render(pd3dCommandList, pCamera);
 		return;
 	}
