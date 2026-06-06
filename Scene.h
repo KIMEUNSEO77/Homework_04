@@ -55,7 +55,12 @@ public:
 	void FirePlayerShellAtSelectedEnemy();
 	void UpdatePlayerShell(float fTimeElapsed);
 	void UpdateLevel2Explosions(float fTimeElapsed);
+	float RotatePlayerTowardSelectedEnemy(float fTimeElapsed);
 	void UpdateAutoAttack(float fTimeElapsed);
+	float RotateEnemyTankTowardPlayer(int nTank, float fTimeElapsed);
+	void FireEnemyTankShell(int nTank);
+	void UpdateEnemyTankAttacks(float fTimeElapsed);
+	void UpdateEnemyTankShells(float fTimeElapsed);
 	void SelectEnemyTankFromMouse(HWND hWnd, LPARAM lParam);
 	void RespawnHouse(int nIndex);
 	void MakeExplosion(XMFLOAT3 xmf3Position);
@@ -93,7 +98,12 @@ public:
 	int							m_nLevel2Objects = 0;
 	CGameObject*				m_ppEnemyTankObjects[10] = { NULL };
 	CGameObject*				m_ppEnemyTankLodObjects[10] = { NULL };
-	bool						m_bEnemyTankActive[10] = { false };
+		CGameObject*				 m_ppEnemyTankShellObjects[10] = { NULL };
+	bool							 m_bEnemyTankShellActive[10] = { false };
+	XMFLOAT3					 m_xmf3EnemyTankShellVelocity[10];
+	float						 m_fEnemyTankShellLifeTime[10] = { 0.0f };
+	float						 m_fEnemyTankFireCooldown[10] = { 0.0f };
+bool						m_bEnemyTankActive[10] = { false };
 		int									 m_nSelectedEnemyTank = -1;
 	bool								 m_bAutoAttack = false;
 	float							 m_fAutoAttackTimer = 0.0f;

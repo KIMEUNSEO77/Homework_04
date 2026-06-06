@@ -537,6 +537,11 @@ void CScene::BuildLevel2Objects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandL
 	if (m_pPlayerShell) m_pPlayerShell->SetScale(1.8f, 0.75f, 0.75f);
 	m_pSelectedEnemyMarker = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 3.2f, 0.1f, 1.0f), 10.0f);
 	m_pSelectedEnemyMarker->SetScale(2.4f, 0.25f, 2.4f);
+	for (int i = 0; i < 10; i++)
+	{
+		m_ppEnemyTankShellObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(0.25f, 4.0f, 1.2f, 1.0f), 7.0f);
+		m_ppEnemyTankShellObjects[i]->SetScale(1.6f, 0.7f, 0.7f);
+	}
 	for (int i = 0; i < 10; i++) m_ppCoinObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 3.0f, 0.1f, 1.0f), 1.4f);
 	for (int i = 0; i < 10; i++) m_ppUltimateGaugeObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 0.1f, 0.1f, 1.0f), 2.0f);
 	for (int i = 0; i < 10; i++) m_ppUltimateBulletObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 0.1f, 0.1f, 1.0f), 6.0f);
@@ -612,6 +617,32 @@ void CScene::FirePlayerShellAtSelectedEnemy()
 	m_fPlayerShellLifeTime = 0.0f;
 	m_bPlayerShellActive = true;
 }
+float CScene::RotatePlayerTowardSelectedEnemy(float fTimeElapsed)
+{
+	if (!m_pPlayer || (m_nSelectedEnemyTank < 0) || (m_nSelectedEnemyTank >= 10) || !m_bEnemyTankActive[m_nSelectedEnemyTank]) return(180.0f);
+
+	XMFLOAT3 xmf3Player = m_pPlayer->GetPosition();
+	XMFLOAT3 xmf3Target = m_ppEnemyTankObjects[m_nSelectedEnemyTank]->GetPosition();
+	XMFLOAT3 xmf3Direction = Vector3::Subtract(xmf3Target, xmf3Player);
+	xmf3Direction.y = 0.0f;
+	if (Vector3::Length(xmf3Direction) < 1.0f) return(0.0f);
+	xmf3Direction = Vector3::Normalize(xmf3Direction);
+
+	XMFLOAT3 xmf3Look = m_pPlayer->GetLookVector();
+	xmf3Look.y = 0.0f;
+	if (Vector3::Length(xmf3Look) < 0.001f) return(180.0f);
+	xmf3Look = Vector3::Normalize(xmf3Look);
+
+	XMFLOAT3 xmf3Up = Vector3::Normalize(m_pPlayer->GetUpVector());
+	XMFLOAT3 xmf3Cross = Vector3::CrossProduct(xmf3Look, xmf3Direction, false);
+	float fTriple = Vector3::DotProduct(xmf3Up, xmf3Cross);
+	float fDot = max(-1.0f, min(1.0f, Vector3::DotProduct(xmf3Look, xmf3Direction)));
+	float fYaw = XMConvertToDegrees(atan2f(fTriple, fDot));
+	float fYawStep = max(-140.0f * fTimeElapsed, min(140.0f * fTimeElapsed, fYaw));
+
+	m_pPlayer->Rotate(0.0f, fYawStep, 0.0f);
+	return(fabsf(fYaw));
+}
 void CScene::UpdateAutoAttack(float fTimeElapsed)
 {
 	if (!m_bAutoAttack) return;
@@ -623,14 +654,124 @@ void CScene::UpdateAutoAttack(float fTimeElapsed)
 		return;
 	}
 
+	float fAngle = RotatePlayerTowardSelectedEnemy(fTimeElapsed);
 	m_fAutoAttackTimer -= fTimeElapsed;
-	if ((m_fAutoAttackTimer <= 0.0f) && !m_bPlayerShellActive)
+	if ((fAngle < 6.0f) && (m_fAutoAttackTimer <= 0.0f) && !m_bPlayerShellActive)
 	{
 		FirePlayerShellAtSelectedEnemy();
 		m_fAutoAttackTimer = 1.25f;
 	}
 }
 
+float CScene::RotateEnemyTankTowardPlayer(int nTank, float fTimeElapsed)
+{
+	if (!m_pPlayer || (nTank < 0) || (nTank >= 10) || !m_ppEnemyTankObjects[nTank]) return(180.0f);
+
+	XMFLOAT3 xmf3Tank = m_ppEnemyTankObjects[nTank]->GetPosition();
+	XMFLOAT3 xmf3Player = m_pPlayer->GetPosition();
+	XMFLOAT3 xmf3Direction = Vector3::Subtract(xmf3Player, xmf3Tank);
+	xmf3Direction.y = 0.0f;
+	if (Vector3::Length(xmf3Direction) < 1.0f) return(0.0f);
+	xmf3Direction = Vector3::Normalize(xmf3Direction);
+
+	XMFLOAT3 xmf3Look = m_ppEnemyTankObjects[nTank]->GetLook();
+	xmf3Look.y = 0.0f;
+	if (Vector3::Length(xmf3Look) < 0.001f) return(180.0f);
+	xmf3Look = Vector3::Normalize(xmf3Look);
+
+	XMFLOAT3 xmf3Up(0.0f, 1.0f, 0.0f);
+	XMFLOAT3 xmf3Cross = Vector3::CrossProduct(xmf3Look, xmf3Direction, false);
+	float fTriple = Vector3::DotProduct(xmf3Up, xmf3Cross);
+	float fDot = max(-1.0f, min(1.0f, Vector3::DotProduct(xmf3Look, xmf3Direction)));
+	float fYaw = XMConvertToDegrees(atan2f(fTriple, fDot));
+	float fYawStep = max(-95.0f * fTimeElapsed, min(95.0f * fTimeElapsed, fYaw));
+
+	m_ppEnemyTankObjects[nTank]->Rotate(0.0f, fYawStep, 0.0f);
+	if (m_ppEnemyTankLodObjects[nTank]) m_ppEnemyTankLodObjects[nTank]->Rotate(0.0f, fYawStep, 0.0f);
+
+	return(fabsf(fYaw));
+}
+
+void CScene::FireEnemyTankShell(int nTank)
+{
+	if (!m_pPlayer || (nTank < 0) || (nTank >= 10) || !m_bEnemyTankActive[nTank] || !m_ppEnemyTankObjects[nTank] || !m_ppEnemyTankShellObjects[nTank]) return;
+	if (m_bEnemyTankShellActive[nTank]) return;
+
+	XMFLOAT3 xmf3Tank = m_ppEnemyTankObjects[nTank]->GetPosition();
+	XMFLOAT3 xmf3Look = Vector3::Normalize(m_ppEnemyTankObjects[nTank]->GetLook());
+	XMFLOAT3 xmf3Up = Vector3::Normalize(m_ppEnemyTankObjects[nTank]->GetUp());
+	XMFLOAT3 xmf3Start = Vector3::Add(xmf3Tank, xmf3Look, 70.0f);
+	xmf3Start = Vector3::Add(xmf3Start, xmf3Up, 28.0f);
+
+	XMFLOAT3 xmf3Target = m_pPlayer->GetPosition();
+	xmf3Target.y += 22.0f;
+	XMFLOAT3 xmf3Direction = Vector3::Subtract(xmf3Target, xmf3Start);
+	if (Vector3::Length(xmf3Direction) < 1.0f) return;
+	xmf3Direction = Vector3::Normalize(xmf3Direction);
+
+	m_ppEnemyTankShellObjects[nTank]->SetPosition(xmf3Start);
+	float fFlightTime = Vector3::Length(Vector3::Subtract(xmf3Target, xmf3Start)) / 240.0f;
+	m_xmf3EnemyTankShellVelocity[nTank] = Vector3::ScalarProduct(xmf3Direction, 240.0f, false);
+	m_xmf3EnemyTankShellVelocity[nTank].y += (30.0f * fFlightTime) + 8.0f;
+	m_fEnemyTankShellLifeTime[nTank] = 0.0f;
+	m_bEnemyTankShellActive[nTank] = true;
+}
+
+void CScene::UpdateEnemyTankAttacks(float fTimeElapsed)
+{
+	if (!m_pPlayer || m_bGameOver || (m_GameState.m_nScene != GAME_SCENE_LEVEL2)) return;
+
+	XMFLOAT3 xmf3Player = m_pPlayer->GetPosition();
+	for (int i = 0; i < 10; i++)
+	{
+		if (!m_bEnemyTankActive[i] || !m_ppEnemyTankObjects[i]) continue;
+
+		m_fEnemyTankFireCooldown[i] -= fTimeElapsed;
+		XMFLOAT3 xmf3Tank = m_ppEnemyTankObjects[i]->GetPosition();
+		float fDistance = DistanceXZ(xmf3Tank, xmf3Player);
+		if (fDistance > 150.0f) continue;
+
+		float fAngle = RotateEnemyTankTowardPlayer(i, fTimeElapsed);
+		if ((fAngle < 10.0f) && (m_fEnemyTankFireCooldown[i] <= 0.0f) && !m_bEnemyTankShellActive[i])
+		{
+			FireEnemyTankShell(i);
+			m_fEnemyTankFireCooldown[i] = 2.4f;
+		}
+	}
+}
+
+void CScene::UpdateEnemyTankShells(float fTimeElapsed)
+{
+	if (!m_pPlayer) return;
+
+	for (int i = 0; i < 10; i++)
+	{
+		if (!m_bEnemyTankShellActive[i] || !m_ppEnemyTankShellObjects[i]) continue;
+
+		m_fEnemyTankShellLifeTime[i] += fTimeElapsed;
+		XMFLOAT3 xmf3Shell = m_ppEnemyTankShellObjects[i]->GetPosition();
+		xmf3Shell = Vector3::Add(xmf3Shell, m_xmf3EnemyTankShellVelocity[i], fTimeElapsed);
+		m_xmf3EnemyTankShellVelocity[i].y -= 60.0f * fTimeElapsed;
+		m_ppEnemyTankShellObjects[i]->SetPosition(xmf3Shell);
+
+		float fGround = (m_pTerrain) ? m_pTerrain->GetHeight(xmf3Shell.x, xmf3Shell.z) : -10000.0f;
+		if ((m_fEnemyTankShellLifeTime[i] > 5.0f) || (xmf3Shell.y <= (fGround + 3.0f)))
+		{
+			m_ppEnemyTankShellObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
+			m_bEnemyTankShellActive[i] = false;
+			continue;
+		}
+
+		XMFLOAT3 xmf3Player = m_pPlayer->GetPosition();
+		if ((m_fEnemyTankShellLifeTime[i] > 0.18f) && (DistanceXZ(xmf3Shell, xmf3Player) < 38.0f) && (xmf3Shell.y >= (xmf3Player.y - 12.0f)) && (xmf3Shell.y <= (xmf3Player.y + 55.0f)))
+		{
+			MakeExplosion(xmf3Player);
+			m_ppEnemyTankShellObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
+			m_bEnemyTankShellActive[i] = false;
+			continue;
+		}
+	}
+}
 void CScene::UpdateLevel2Explosions(float fTimeElapsed)
 {
 	for (int i = 0; i < 16; i++)
@@ -879,9 +1020,12 @@ void CScene::ReleaseObjects()
 	{
 		if (m_ppEnemyTankObjects[i]) delete m_ppEnemyTankObjects[i];
 		if (m_ppEnemyTankLodObjects[i]) delete m_ppEnemyTankLodObjects[i];
+		if (m_ppEnemyTankShellObjects[i]) delete m_ppEnemyTankShellObjects[i];
 		m_ppEnemyTankObjects[i] = NULL;
 		m_ppEnemyTankLodObjects[i] = NULL;
+		m_ppEnemyTankShellObjects[i] = NULL;
 		m_bEnemyTankActive[i] = false;
+		m_bEnemyTankShellActive[i] = false;
 	}
 	if (m_pBomb) delete m_pBomb;
 	m_pBomb = NULL;
@@ -965,6 +1109,7 @@ void CScene::ReleaseUploadBuffers()
 	for (int i = 0; i < m_nLevel2Objects; i++) if (m_ppLevel2Objects[i]) m_ppLevel2Objects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < 10; i++) if (m_ppEnemyTankObjects[i]) m_ppEnemyTankObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < 10; i++) if (m_ppEnemyTankLodObjects[i]) m_ppEnemyTankLodObjects[i]->ReleaseUploadBuffers();
+	for (int i = 0; i < 10; i++) if (m_ppEnemyTankShellObjects[i]) m_ppEnemyTankShellObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < m_nTitleObjects; i++) if (m_ppTitleObjects[i]) m_ppTitleObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < m_nMenuObjects; i++) if (m_ppMenuObjects[i]) m_ppMenuObjects[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < m_nGameOverObjects; i++) if (m_ppGameOverObjects[i]) m_ppGameOverObjects[i]->ReleaseUploadBuffers();
@@ -1019,6 +1164,13 @@ void CScene::ResetLevelState()
 	m_bAutoAttack = false;
 	m_fAutoAttackTimer = 0.0f;
 	if (m_pSelectedEnemyMarker) m_pSelectedEnemyMarker->SetPosition(0.0f, -10000.0f, 0.0f);
+	for (int i = 0; i < 10; i++)
+	{
+		m_bEnemyTankShellActive[i] = false;
+		m_fEnemyTankShellLifeTime[i] = 0.0f;
+		m_fEnemyTankFireCooldown[i] = 1.0f + (i * 0.18f);
+		if (m_ppEnemyTankShellObjects[i]) m_ppEnemyTankShellObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
+	}
 	for (int i = 0; i < 10; i++)
 	{
 		if (m_ppCoinObjects[i])
@@ -1341,7 +1493,9 @@ void CScene::AnimateObjects(float fTimeElapsed)
 	if (m_GameState.m_nScene == GAME_SCENE_LEVEL2)
 	{
 		UpdateAutoAttack(fTimeElapsed);
+		UpdateEnemyTankAttacks(fTimeElapsed);
 		UpdatePlayerShell(fTimeElapsed);
+		UpdateEnemyTankShells(fTimeElapsed);
 		UpdateLevel2Explosions(fTimeElapsed);
 		for (int i = 0; i < m_nLevel2Objects; i++) if (m_ppLevel2Objects[i]) m_ppLevel2Objects[i]->UpdateTransform(NULL);
 		for (int i = 0; i < 10; i++)
@@ -1361,6 +1515,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 		}
 		if (m_pPlayerShell) m_pPlayerShell->UpdateTransform(NULL);
 		if (m_pSelectedEnemyMarker) m_pSelectedEnemyMarker->UpdateTransform(NULL);
+		for (int i = 0; i < 10; i++) if (m_ppEnemyTankShellObjects[i]) m_ppEnemyTankShellObjects[i]->UpdateTransform(NULL);
 		for (int i = 0; i < 16; i++) if (m_ppExplosionObjects[i]) m_ppExplosionObjects[i]->UpdateTransform(NULL);
 		return;
 	}
@@ -1607,6 +1762,7 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 		}
 
 		if (m_bPlayerShellActive && m_pPlayerShell) m_pPlayerShell->Render(pd3dCommandList, pCamera);
+		for (int i = 0; i < 10; i++) if (m_bEnemyTankShellActive[i] && m_ppEnemyTankShellObjects[i]) m_ppEnemyTankShellObjects[i]->Render(pd3dCommandList, pCamera);
 		if (m_pSelectedEnemyMarker && (m_nSelectedEnemyTank >= 0)) m_pSelectedEnemyMarker->Render(pd3dCommandList, pCamera);
 		for (int i = 0; i < 16; i++) if (m_pfExplosionTime[i] > 0.0f) m_ppExplosionObjects[i]->Render(pd3dCommandList, pCamera);
 		return;
