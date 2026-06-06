@@ -156,6 +156,8 @@ static const char* g_pS[7] = { "01111", "10000", "10000", "01110", "00001", "000
 static const char* g_pT[7] = { "11111", "00100", "00100", "00100", "00100", "00100", "00100" };
 static const char* g_pU[7] = { "10001", "10001", "10001", "10001", "10001", "10001", "01110" };
 static const char* g_pV[7] = { "10001", "10001", "10001", "10001", "01010", "01010", "00100" };
+static const char* g_pW[7] = { "10001", "10001", "10001", "10101", "10101", "11011", "10001" };
+static const char* g_pY[7] = { "10001", "10001", "01010", "00100", "00100", "00100", "00100" };
 static const char* g_pHyphen[7] = { "00000", "00000", "00000", "11111", "00000", "00000", "00000" };
 static const char* g_p1[7] = { "00100", "01100", "00100", "00100", "00100", "00100", "11111" };
 static const char* g_p2[7] = { "11110", "00001", "00001", "11110", "10000", "10000", "11111" };
@@ -181,6 +183,8 @@ static const char** GetEnglishGlyph(char ch)
 	case 'T': return(g_pT);
 	case 'U': return(g_pU);
 	case 'V': return(g_pV);
+	case 'W': return(g_pW);
+	case 'Y': return(g_pY);
 	case '-': return(g_pHyphen);
 	case '1': return(g_p1);
 	case '2': return(g_p2);
@@ -383,7 +387,7 @@ void CScene::BuildGameClearObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsComma
 	CMesh* pTextMesh = new CCubeMesh(pd3dDevice, pd3dCommandList, 5.0f, 5.0f, 5.0f);
 	CMesh* pButtonMesh = new CCubeMesh(pd3dDevice, pd3dCommandList, 5.0f, 5.0f, 5.0f);
 
-	AddCubeLabel(vObjects, pTextMesh, "GAME CLEAR", 0.0f, 95.0f, 0.0f, 9.0f, 10.8f, XMFLOAT4(0.25f, 0.55f, 4.0f, 1.0f));
+	AddCubeLabel(vObjects, pTextMesh, "YOU WIN", 0.0f, 95.0f, 0.0f, 10.0f, 12.0f, XMFLOAT4(0.25f, 0.55f, 4.0f, 1.0f));
 	AddResultButton(vObjects, pButtonMesh, "MENU", 0.0f, -75.0f, 185.0f, 65.0f);
 
 	m_nGameClearObjects = (int)vObjects.size();
@@ -1083,7 +1087,9 @@ void CScene::HitHouseByBullet(XMFLOAT3 xmf3BulletPosition, bool* pbBulletActive,
 			if (m_nCoins < 10) m_nCoins++;
 			if (m_nCoins >= 10)
 			{
-				BeginLevel2();
+				m_bGameClear = true;
+				m_GameState.m_nScene = GAME_SCENE_GAMECLEAR;
+				ResetMenuCamera();
 			}
 			break;
 		}
@@ -1373,7 +1379,23 @@ void CScene::BeginLevel2()
 	 m_bAutoAttack = false;
 	 m_fAutoAttackTimer = 0.0f;
 	 if (m_pSelectedEnemyMarker) m_pSelectedEnemyMarker->SetPosition(0.0f, -10000.0f, 0.0f);
-	 m_bPlayerShieldActive = false;
+	 	 const float pfEnemyTankPlacements[10][3] =
+	 {
+		 { 1030.0f, 520.0f, 180.0f }, { 520.0f, 1030.0f, 90.0f }, { 1520.0f, 1030.0f, -90.0f }, { 1030.0f, 1520.0f, 0.0f }, { 700.0f, 700.0f, 135.0f },
+		 { 1360.0f, 700.0f, -135.0f }, { 700.0f, 1360.0f, 45.0f }, { 1360.0f, 1360.0f, -45.0f }, { 1030.0f, 760.0f, 180.0f }, { 1030.0f, 1280.0f, 0.0f }
+	 };
+	 for (int i = 0; i < 10; i++)
+	 {
+		 float x = pfEnemyTankPlacements[i][0];
+		 float z = pfEnemyTankPlacements[i][1];
+		 m_bEnemyTankActive[i] = true;
+		 m_bEnemyTankShellActive[i] = false;
+		 m_fEnemyTankShellLifeTime[i] = 0.0f;
+		 m_fEnemyTankFireCooldown[i] = 1.0f + (i * 0.18f);
+		 if (m_ppEnemyTankObjects[i]) m_ppEnemyTankObjects[i]->SetPosition(x, TerrainY(m_pTerrain, x, z, 18.0f), z);
+		 if (m_ppEnemyTankLodObjects[i]) m_ppEnemyTankLodObjects[i]->SetPosition(x, TerrainY(m_pTerrain, x, z, 18.0f), z);
+		 if (m_ppEnemyTankShellObjects[i]) m_ppEnemyTankShellObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
+	 }m_bPlayerShieldActive = false;
 	 m_fPlayerShieldTime = 0.0f;
 	 for (int i = 0; i < 12; i++) if (m_ppShieldObjects[i]) m_ppShieldObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
 	 m_bUltimateFiring = false;
@@ -1487,6 +1509,14 @@ bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 // Level1에서 ESC키 입력 시 메뉴 화면으로 전환
 bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
+	if ((nMessageID == WM_KEYUP) && ((wParam == 'C') || (wParam == 'c')) && (m_GameState.m_nScene == GAME_SCENE_LEVEL2))
+	{
+		m_bGameClear = true;
+		m_GameState.m_nScene = GAME_SCENE_GAMECLEAR;
+		ResetMenuCamera();
+		return(true);
+	}
+
 	if ((nMessageID == WM_KEYUP) && ((wParam == 'S') || (wParam == 's')) && (m_GameState.m_nScene == GAME_SCENE_LEVEL2))
 	{
 		m_bPlayerShieldActive = true;
@@ -1613,6 +1643,23 @@ void CScene::AnimateObjects(float fTimeElapsed)
 		UpdateEnemyTankShells(fTimeElapsed);
 		UpdatePlayerShield(fTimeElapsed);
 		UpdateLevel2Explosions(fTimeElapsed);
+		bool bAnyEnemyTankAlive = false;
+		for (int i = 0; i < 10; i++)
+		{
+			if (m_bEnemyTankActive[i])
+			{
+				bAnyEnemyTankAlive = true;
+				break;
+			}
+		}
+		if (!bAnyEnemyTankAlive)
+		{
+			m_bGameClear = true;
+			m_GameState.m_nScene = GAME_SCENE_GAMECLEAR;
+			ResetMenuCamera();
+			return;
+		}
+
 		for (int i = 0; i < m_nLevel2Objects; i++) if (m_ppLevel2Objects[i]) m_ppLevel2Objects[i]->UpdateTransform(NULL);
 		for (int i = 0; i < 10; i++)
 		{
@@ -1777,7 +1824,9 @@ void CScene::AnimateObjects(float fTimeElapsed)
 				if (m_nCoins < 10) m_nCoins++;
 				if (m_nCoins >= 10)
 				{
-					BeginLevel2();
+					m_bGameClear = true;
+					m_GameState.m_nScene = GAME_SCENE_GAMECLEAR;
+					ResetMenuCamera();
 				}
 				break;
 			}
