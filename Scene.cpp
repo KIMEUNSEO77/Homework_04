@@ -732,7 +732,7 @@ void CScene::FireEnemyTankShell(int nTank)
 
 void CScene::UpdateEnemyTankAttacks(float fTimeElapsed)
 {
-	if (!m_pPlayer || m_bGameOver || (m_GameState.m_nScene != GAME_SCENE_LEVEL2)) return;
+	if (!m_pPlayer || m_bGameOver || ((m_GameState.m_nScene != GAME_SCENE_LEVEL2) && (m_GameState.m_nScene != GAME_SCENE_LEVEL3))) return;
 
 	XMFLOAT3 xmf3Player = m_pPlayer->GetPosition();
 	for (int i = 0; i < 10; i++)
@@ -742,7 +742,8 @@ void CScene::UpdateEnemyTankAttacks(float fTimeElapsed)
 		m_fEnemyTankFireCooldown[i] -= fTimeElapsed;
 		XMFLOAT3 xmf3Tank = m_ppEnemyTankObjects[i]->GetPosition();
 		float fDistance = DistanceXZ(xmf3Tank, xmf3Player);
-		if (fDistance > 150.0f) continue;
+		float fAttackRange = (m_GameState.m_nScene == GAME_SCENE_LEVEL3) ? 650.0f : 150.0f;
+		if (fDistance > fAttackRange) continue;
 
 		float fAngle = RotateEnemyTankTowardPlayer(i, fTimeElapsed);
 		if ((fAngle < 10.0f) && (m_fEnemyTankFireCooldown[i] <= 0.0f) && !m_bEnemyTankShellActive[i])
@@ -1268,6 +1269,9 @@ void CScene::ResetLevelState()
 	m_bFireKeyDown = false;
 	m_fHouseRespawnTimer = 0.0f;
 	m_fGameEndBlink = 0.0f;
+	 m_nPlayerHealth = 10;
+	 m_bPlayerShieldActive = false;
+	 m_fPlayerShieldTime = 0.0f;
 
 	if (m_pBomb) m_pBomb->SetPosition(0.0f, -10000.0f, 0.0f);
 	if (m_pPlayerShell) m_pPlayerShell->SetPosition(0.0f, -10000.0f, 0.0f);
@@ -1443,6 +1447,24 @@ void CScene::BeginLevel3()
 	ResetLevelState();
 	m_GameState.m_nScene = GAME_SCENE_LEVEL3;
 
+	const float pfLevel3TankPlacements[10][3] =
+	{
+		{ 1030.0f, 520.0f, 180.0f }, { 520.0f, 1030.0f, 90.0f }, { 1520.0f, 1030.0f, -90.0f }, { 1030.0f, 1520.0f, 0.0f }, { 700.0f, 700.0f, 135.0f },
+		{ 1360.0f, 700.0f, -135.0f }, { 700.0f, 1360.0f, 45.0f }, { 1360.0f, 1360.0f, -45.0f }, { 1030.0f, 760.0f, 180.0f }, { 1030.0f, 1280.0f, 0.0f }
+	};
+	for (int i = 0; i < 10; i++)
+	{
+		float x = pfLevel3TankPlacements[i][0];
+		float z = pfLevel3TankPlacements[i][1];
+		m_bEnemyTankActive[i] = true;
+		m_bEnemyTankShellActive[i] = false;
+		m_fEnemyTankShellLifeTime[i] = 0.0f;
+		m_fEnemyTankFireCooldown[i] = 1.0f + (i * 0.18f);
+		if (m_ppEnemyTankObjects[i]) m_ppEnemyTankObjects[i]->SetPosition(x, TerrainY(m_pTerrain, x, z, 18.0f), z);
+		if (m_ppEnemyTankLodObjects[i]) m_ppEnemyTankLodObjects[i]->SetPosition(x, TerrainY(m_pTerrain, x, z, 18.0f), z);
+		if (m_ppEnemyTankShellObjects[i]) m_ppEnemyTankShellObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
+	}
+
 	if (m_pPlayer && m_pTerrain)
 	{
 		float fPlayerX = m_pTerrain->GetWidth() * 0.5f;
@@ -1613,7 +1635,7 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 		return(true);
 	}
 
-	if ((nMessageID == WM_KEYUP) && ((wParam == 'S') || (wParam == 's')) && (m_GameState.m_nScene == GAME_SCENE_LEVEL2))
+	if ((nMessageID == WM_KEYUP) && ((wParam == 'S') || (wParam == 's')) && ((m_GameState.m_nScene == GAME_SCENE_LEVEL2) || (m_GameState.m_nScene == GAME_SCENE_LEVEL3)))
 	{
 		m_bPlayerShieldActive = true;
 		m_fPlayerShieldTime = 2.0f;
@@ -1668,7 +1690,13 @@ bool CScene::ProcessInput(UCHAR* pKeysBuffer)
 		m_bPlayerShellKeyDown = bShellKeyDown;
 		return(false);
 	}
-	if (m_GameState.m_nScene == GAME_SCENE_LEVEL3) return(false);
+	if (m_GameState.m_nScene == GAME_SCENE_LEVEL3)
+	{
+		bool bFireKeyDown = ((pKeysBuffer[VK_SPACE] & 0xF0) != 0);
+		if (bFireKeyDown && !m_bFireKeyDown) FireBomb();
+		m_bFireKeyDown = bFireKeyDown;
+		return(false);
+	}
 	if (m_GameState.m_nScene != GAME_SCENE_LEVEL1) return(true);
 
 	bool bFireKeyDown = ((pKeysBuffer[VK_SPACE] & 0xF0) != 0);
@@ -1732,11 +1760,73 @@ void CScene::AnimateObjects(float fTimeElapsed)
 		return;
 	}
 
-	if (m_GameState.m_nScene == GAME_SCENE_LEVEL3)
+		if (m_GameState.m_nScene == GAME_SCENE_LEVEL3)
 	{
+		UpdateEnemyTankAttacks(fTimeElapsed);
+		UpdateEnemyTankShells(fTimeElapsed);
+		UpdatePlayerShield(fTimeElapsed);
+		UpdateLevel2Explosions(fTimeElapsed);
+
+		if (m_bBombActive && m_pBomb)
+		{
+			XMFLOAT3 xmf3Bomb = m_pBomb->GetPosition();
+			xmf3Bomb.y -= 330.0f * fTimeElapsed;
+			m_pBomb->SetPosition(xmf3Bomb);
+
+			float fGround = (m_pTerrain) ? m_pTerrain->GetHeight(xmf3Bomb.x, xmf3Bomb.z) : 0.0f;
+			if (xmf3Bomb.y <= (fGround + 2.0f))
+			{
+				m_pBomb->SetPosition(0.0f, -10000.0f, 0.0f);
+				m_bBombActive = false;
+			}
+
+			for (int i = 0; i < 10; i++)
+			{
+				if (!m_bEnemyTankActive[i] || !m_ppEnemyTankObjects[i]) continue;
+				XMFLOAT3 xmf3Tank = m_ppEnemyTankObjects[i]->GetPosition();
+				if ((DistanceXZ(xmf3Bomb, xmf3Tank) < 62.0f) && (xmf3Bomb.y <= (xmf3Tank.y + 80.0f)))
+				{
+					XMFLOAT3 xmf3Explosion = xmf3Tank;
+					xmf3Explosion.y += 25.0f;
+					MakeExplosion(xmf3Explosion);
+					m_bEnemyTankActive[i] = false;
+					m_ppEnemyTankObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
+					if (m_ppEnemyTankLodObjects[i]) m_ppEnemyTankLodObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
+					m_pBomb->SetPosition(0.0f, -10000.0f, 0.0f);
+					m_bBombActive = false;
+					break;
+				}
+			}
+		}
+
+		bool bAnyEnemyTankAlive = false;
+		for (int i = 0; i < 10; i++)
+		{
+			if (m_bEnemyTankActive[i])
+			{
+				bAnyEnemyTankAlive = true;
+				break;
+			}
+		}
+		if (!bAnyEnemyTankAlive)
+		{
+			m_bGameClear = true;
+			m_GameState.m_nScene = GAME_SCENE_GAMECLEAR;
+			ResetMenuCamera();
+			return;
+		}
+
+		for (int i = 0; i < 10; i++)
+		{
+			if (m_ppEnemyTankObjects[i]) m_ppEnemyTankObjects[i]->UpdateTransform(NULL);
+			if (m_ppEnemyTankLodObjects[i]) m_ppEnemyTankLodObjects[i]->UpdateTransform(NULL);
+			if (m_ppEnemyTankShellObjects[i]) m_ppEnemyTankShellObjects[i]->UpdateTransform(NULL);
+		}
+		for (int i = 0; i < 12; i++) if (m_ppShieldObjects[i]) m_ppShieldObjects[i]->UpdateTransform(NULL);
+		for (int i = 0; i < 16; i++) if (m_ppExplosionObjects[i]) m_ppExplosionObjects[i]->UpdateTransform(NULL);
+		if (m_pBomb) m_pBomb->UpdateTransform(NULL);
 		return;
 	}
-
 	if (m_GameState.m_nScene == GAME_SCENE_LEVEL2)
 	{
 		UpdateAutoAttack(fTimeElapsed);
@@ -2002,12 +2092,32 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 		return;
 	}
 
-	if (m_GameState.m_nScene == GAME_SCENE_LEVEL3)
+		if (m_GameState.m_nScene == GAME_SCENE_LEVEL3)
 	{
 		if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
+
+		for (int i = 0; i < 10; i++)
+		{
+			if (!m_bEnemyTankActive[i]) continue;
+			float fDistance = DistanceXZFromCamera(pCamera, m_ppEnemyTankObjects[i]);
+			if ((fDistance < 700.0f) && IsInFrontOfCamera(pCamera, m_ppEnemyTankObjects[i], 220.0f))
+			{
+				m_ppEnemyTankObjects[i]->Render(pd3dCommandList, pCamera);
+			}
+			else if ((fDistance < 1250.0f) && IsInFrontOfCamera(pCamera, m_ppEnemyTankLodObjects[i], 260.0f))
+			{
+				m_ppEnemyTankLodObjects[i]->Render(pd3dCommandList, pCamera);
+			}
+		}
+
+		if (m_bBombActive && m_pBomb) m_pBomb->Render(pd3dCommandList, pCamera);
+		for (int i = 0; i < 10; i++) if (m_bEnemyTankShellActive[i] && m_ppEnemyTankShellObjects[i]) m_ppEnemyTankShellObjects[i]->Render(pd3dCommandList, pCamera);
+		for (int i = 0; i < 12; i++) if (m_bPlayerShieldActive && m_ppShieldObjects[i]) m_ppShieldObjects[i]->Render(pd3dCommandList, pCamera);
+		UpdateHealthObjects(pCamera);
+		for (int i = 0; i < 10; i++) if (m_ppHealthObjects[i]) m_ppHealthObjects[i]->Render(pd3dCommandList, pCamera);
+		for (int i = 0; i < 16; i++) if (m_pfExplosionTime[i] > 0.0f) m_ppExplosionObjects[i]->Render(pd3dCommandList, pCamera);
 		return;
 	}
-
 	if (m_GameState.m_nScene == GAME_SCENE_LEVEL2)
 	{
 		if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
