@@ -354,15 +354,22 @@ void CScene::BuildMenuObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLis
 	XMFLOAT4 xmf4Green(0.1f, 1.0f, 0.2f, 1.0f);
 
 	AddCubeButton(vObjects, pButtonMesh, pTextMesh, "TUTORIAL", -255.0f, 90.0f, 180.0f, 60.0f, xmf4White);
+	m_nMenuLevelButtonStart[0] = (int)vObjects.size();
 	AddCubeButton(vObjects, pButtonMesh, pTextMesh, "LEVEL-1", -85.0f, 90.0f, 145.0f, 60.0f, xmf4White);
+	m_nMenuLevelButtonCount[0] = (int)vObjects.size() - m_nMenuLevelButtonStart[0];
+	m_nMenuLevelButtonStart[1] = (int)vObjects.size();
 	AddCubeButton(vObjects, pButtonMesh, pTextMesh, "LEVEL-2", 80.0f, 90.0f, 145.0f, 60.0f, xmf4White);
+	m_nMenuLevelButtonCount[1] = (int)vObjects.size() - m_nMenuLevelButtonStart[1];
+	m_nMenuLevelButtonStart[2] = (int)vObjects.size();
 	AddCubeButton(vObjects, pButtonMesh, pTextMesh, "LEVEL-3", 245.0f, 90.0f, 145.0f, 60.0f, xmf4White);
+	m_nMenuLevelButtonCount[2] = (int)vObjects.size() - m_nMenuLevelButtonStart[2];
 	AddCubeButton(vObjects, pButtonMesh, pTextMesh, "START", 0.0f, -25.0f, 200.0f, 65.0f, xmf4Green);
 	AddCubeButton(vObjects, pButtonMesh, pTextMesh, "END", 0.0f, -125.0f, 200.0f, 65.0f, xmf4White);
 
 	m_nMenuObjects = (int)vObjects.size();
 	m_ppMenuObjects = new CGameObject * [m_nMenuObjects];
 	for (int i = 0; i < m_nMenuObjects; i++) m_ppMenuObjects[i] = vObjects[i];
+	UpdateMenuLevelSelection();
 }
 
 // 게임 오버 화면
@@ -1346,6 +1353,41 @@ bool CScene::IsMenuStartClicked(HWND hWnd, LPARAM lParam)
 
 	return((x >= nLeft) && (x <= nRight) && (y >= nTop) && (y <= nBottom));
 }
+int CScene::IsMenuLevelClicked(HWND hWnd, LPARAM lParam)
+{
+	RECT rcClient;
+	::GetClientRect(hWnd, &rcClient);
+	int nWidth = rcClient.right - rcClient.left;
+	int nHeight = rcClient.bottom - rcClient.top;
+	if ((nWidth <= 0) || (nHeight <= 0)) return(0);
+
+	int x = LOWORD(lParam);
+	int y = HIWORD(lParam);
+	int nTop = int(nHeight * 0.27f);
+	int nBottom = int(nHeight * 0.42f);
+	if ((y < nTop) || (y > nBottom)) return(0);
+
+	if ((x >= int(nWidth * 0.33f)) && (x <= int(nWidth * 0.45f))) return(1);
+	if ((x >= int(nWidth * 0.48f)) && (x <= int(nWidth * 0.60f))) return(2);
+	if ((x >= int(nWidth * 0.63f)) && (x <= int(nWidth * 0.77f))) return(3);
+	return(0);
+}
+
+void CScene::UpdateMenuLevelSelection()
+{
+	if (!m_ppMenuObjects) return;
+	XMFLOAT4 xmf4Normal(0.85f, 0.85f, 0.9f, 1.0f);
+	XMFLOAT4 xmf4Selected(0.1f, 1.0f, 0.2f, 1.0f);
+	for (int nLevel = 0; nLevel < 3; nLevel++)
+	{
+		XMFLOAT4 xmf4Color = ((m_nSelectedMenuLevel - 1) == nLevel) ? xmf4Selected : xmf4Normal;
+		for (int i = 0; i < m_nMenuLevelButtonCount[nLevel]; i++)
+		{
+			int nObject = m_nMenuLevelButtonStart[nLevel] + i;
+			if ((nObject >= 0) && (nObject < m_nMenuObjects) && m_ppMenuObjects[nObject]) m_ppMenuObjects[nObject]->SetColor(xmf4Color);
+		}
+	}
+}
 
 // 마우스 클릭 좌표가 결과 화면의 Menu 버튼 영역 안에 있는지 검사
 bool CScene::IsGameOverMenuClicked(HWND hWnd, LPARAM lParam)
@@ -1367,9 +1409,67 @@ bool CScene::IsGameOverMenuClicked(HWND hWnd, LPARAM lParam)
 }
 
 // 시작 화면 폭발
+void CScene::BeginLevel1()
+{
+	ResetLevelState();
+	m_GameState.m_nScene = GAME_SCENE_LEVEL1;
+
+	if (m_pPlayer && m_pTerrain)
+	{
+		float fPlayerX = m_pTerrain->GetWidth() * 0.5f;
+		float fPlayerZ = m_pTerrain->GetLength() * 0.5f;
+		XMFLOAT3 xmf3PlayerPosition(fPlayerX, m_pTerrain->GetHeight(fPlayerX, fPlayerZ) + 70.0f, fPlayerZ);
+
+		m_pPlayer->ResetOrientation();
+		m_pPlayer->SetVelocity(XMFLOAT3(0.0f, 0.0f, 0.0f));
+		m_pPlayer->SetMaxVelocityXZ(150.0f);
+		m_pPlayer->SetMaxVelocityY(160.0f);
+		m_pPlayer->SetFriction(80.0f);
+		m_pPlayer->SetPosition(xmf3PlayerPosition);
+
+		CCamera* pCamera = m_pPlayer->GetCamera();
+		if (pCamera)
+		{
+			pCamera->SetOffset(XMFLOAT3(0.0f, 150.0f, -170.0f));
+			pCamera->SetTimeLag(0.25f);
+			pCamera->SetPosition(Vector3::Add(xmf3PlayerPosition, pCamera->GetOffset()));
+		}
+		m_pPlayer->Update(0.0f);
+	}
+}
+
+void CScene::BeginLevel3()
+{
+	ResetLevelState();
+	m_GameState.m_nScene = GAME_SCENE_LEVEL3;
+
+	if (m_pPlayer && m_pTerrain)
+	{
+		float fPlayerX = m_pTerrain->GetWidth() * 0.5f;
+		float fPlayerZ = m_pTerrain->GetLength() * 0.5f;
+		XMFLOAT3 xmf3PlayerPosition(fPlayerX, m_pTerrain->GetHeight(fPlayerX, fPlayerZ) + 90.0f, fPlayerZ);
+
+		m_pPlayer->ResetOrientation();
+		m_pPlayer->SetVelocity(XMFLOAT3(0.0f, 0.0f, 0.0f));
+		m_pPlayer->SetMaxVelocityXZ(150.0f);
+		m_pPlayer->SetMaxVelocityY(160.0f);
+		m_pPlayer->SetFriction(80.0f);
+		m_pPlayer->SetPosition(xmf3PlayerPosition);
+
+		CCamera* pCamera = m_pPlayer->GetCamera();
+		if (pCamera)
+		{
+			pCamera->SetOffset(XMFLOAT3(0.0f, 150.0f, -170.0f));
+			pCamera->SetTimeLag(0.25f);
+			pCamera->SetPosition(Vector3::Add(xmf3PlayerPosition, pCamera->GetOffset()));
+		}
+		m_pPlayer->Update(0.0f);
+	}
+}
 void CScene::BeginLevel2()
 {
-	 m_GameState.m_nScene = GAME_SCENE_LEVEL2;
+	ResetLevelState();
+	m_GameState.m_nScene = GAME_SCENE_LEVEL2;
 	 m_bFireKeyDown = false;
 	 m_bPlayerShellKeyDown = false;
 	 m_bBombActive = false;
@@ -1379,7 +1479,7 @@ void CScene::BeginLevel2()
 	 m_bAutoAttack = false;
 	 m_fAutoAttackTimer = 0.0f;
 	 if (m_pSelectedEnemyMarker) m_pSelectedEnemyMarker->SetPosition(0.0f, -10000.0f, 0.0f);
-	 	 const float pfEnemyTankPlacements[10][3] =
+	const float pfEnemyTankPlacements[10][3] =
 	 {
 		 { 1030.0f, 520.0f, 180.0f }, { 520.0f, 1030.0f, 90.0f }, { 1520.0f, 1030.0f, -90.0f }, { 1030.0f, 1520.0f, 0.0f }, { 700.0f, 700.0f, 135.0f },
 		 { 1360.0f, 700.0f, -135.0f }, { 700.0f, 1360.0f, 45.0f }, { 1360.0f, 1360.0f, -45.0f }, { 1030.0f, 760.0f, 180.0f }, { 1030.0f, 1280.0f, 0.0f }
@@ -1401,12 +1501,17 @@ void CScene::BeginLevel2()
 	 for (int i = 0; i < 12; i++) if (m_ppShieldObjects[i]) m_ppShieldObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
 	 m_bUltimateFiring = false;
 
-	 if (m_pPlayer && m_pTerrain)
+	if (m_pPlayer && m_pTerrain)
 	 {
-		 XMFLOAT3 xmf3Player = m_pPlayer->GetPosition();
-		 xmf3Player.y = m_pTerrain->GetHeight(xmf3Player.x, xmf3Player.z) + 18.0f;
+		 float fPlayerX = m_pTerrain->GetWidth() * 0.5f;
+		 float fPlayerZ = m_pTerrain->GetLength() * 0.5f;
+		 XMFLOAT3 xmf3Player(fPlayerX, m_pTerrain->GetHeight(fPlayerX, fPlayerZ) + 18.0f, fPlayerZ);
+
+		 m_pPlayer->ResetOrientation();
+		 m_pPlayer->SetVelocity(XMFLOAT3(0.0f, 0.0f, 0.0f));
 		 m_pPlayer->SetPosition(xmf3Player);
 		 m_pPlayer->SetMaxVelocityXZ(55.0f);
+		 m_pPlayer->SetMaxVelocityY(160.0f);
 		 m_pPlayer->SetFriction(120.0f);
 
 		 CCamera* pCamera = m_pPlayer->GetCamera();
@@ -1478,33 +1583,18 @@ bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 
 		if (m_GameState.m_nScene == GAME_SCENE_MENU)
 		{
-			if (!IsMenuStartClicked(hWnd, lParam)) return(true);
-			ResetLevelState();
-
-			m_GameState.m_nScene = GAME_SCENE_LEVEL1;
-
-			if (m_pPlayer && m_pTerrain)
+			int nClickedLevel = IsMenuLevelClicked(hWnd, lParam);
+			if (nClickedLevel > 0)
 			{
-				float fPlayerX = m_pTerrain->GetWidth() * 0.5f;
-				float fPlayerZ = m_pTerrain->GetLength() * 0.5f;
-				XMFLOAT3 xmf3PlayerPosition(fPlayerX, m_pTerrain->GetHeight(fPlayerX, fPlayerZ) + 70.0f, fPlayerZ);
-
-				m_pPlayer->ResetOrientation();
-				m_pPlayer->SetVelocity(XMFLOAT3(0.0f, 0.0f, 0.0f));
-				m_pPlayer->SetMaxVelocityXZ(150.0f);
-				m_pPlayer->SetMaxVelocityY(160.0f);
-				m_pPlayer->SetFriction(80.0f);
-				m_pPlayer->SetPosition(xmf3PlayerPosition);
-
-				CCamera* pCamera = m_pPlayer->GetCamera();
-				if (pCamera)
-				{
-					pCamera->SetOffset(XMFLOAT3(0.0f, 150.0f, -170.0f));
-					pCamera->SetTimeLag(0.25f);
-					pCamera->SetPosition(Vector3::Add(xmf3PlayerPosition, pCamera->GetOffset()));
-				}
-				m_pPlayer->Update(0.0f);
+				m_nSelectedMenuLevel = nClickedLevel;
+				UpdateMenuLevelSelection();
+				return(true);
 			}
+
+			if (!IsMenuStartClicked(hWnd, lParam)) return(true);
+			if (m_nSelectedMenuLevel == 2) BeginLevel2();
+			else if (m_nSelectedMenuLevel == 3) BeginLevel3();
+			else BeginLevel1();
 			return(true);
 		}
 	}
@@ -1547,7 +1637,7 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	}
 
 	if ((nMessageID == WM_KEYUP) && (wParam == VK_ESCAPE) && 
-		((m_GameState.m_nScene == GAME_SCENE_LEVEL1) || (m_GameState.m_nScene == GAME_SCENE_LEVEL2)))
+		((m_GameState.m_nScene == GAME_SCENE_LEVEL1) || (m_GameState.m_nScene == GAME_SCENE_LEVEL2) || (m_GameState.m_nScene == GAME_SCENE_LEVEL3)))
 	{
 		m_GameState.m_nScene = GAME_SCENE_MENU;
 		m_bFireKeyDown = false;
@@ -1578,6 +1668,7 @@ bool CScene::ProcessInput(UCHAR* pKeysBuffer)
 		m_bPlayerShellKeyDown = bShellKeyDown;
 		return(false);
 	}
+	if (m_GameState.m_nScene == GAME_SCENE_LEVEL3) return(false);
 	if (m_GameState.m_nScene != GAME_SCENE_LEVEL1) return(true);
 
 	bool bFireKeyDown = ((pKeysBuffer[VK_SPACE] & 0xF0) != 0);
@@ -1638,6 +1729,11 @@ void CScene::AnimateObjects(float fTimeElapsed)
 	if (m_GameState.m_nScene == GAME_SCENE_GAMECLEAR)
 	{
 		for (int i = 0; i < m_nGameClearObjects; i++) m_ppGameClearObjects[i]->UpdateTransform(NULL);
+		return;
+	}
+
+	if (m_GameState.m_nScene == GAME_SCENE_LEVEL3)
+	{
 		return;
 	}
 
@@ -1903,6 +1999,12 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 	if (m_GameState.m_nScene == GAME_SCENE_GAMECLEAR)
 	{
 		RenderSceneObjects(pd3dCommandList, pCamera, m_ppGameClearObjects, m_nGameClearObjects);
+		return;
+	}
+
+	if (m_GameState.m_nScene == GAME_SCENE_LEVEL3)
+	{
+		if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
 		return;
 	}
 

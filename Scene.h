@@ -13,8 +13,9 @@ enum GAME_SCENE_ID
 	GAME_SCENE_MENU = 1,
 	GAME_SCENE_LEVEL1 = 2,
 	GAME_SCENE_LEVEL2 = 3,
-	GAME_SCENE_GAMEOVER = 4,
-	GAME_SCENE_GAMECLEAR = 5
+	GAME_SCENE_LEVEL3 = 4,
+	GAME_SCENE_GAMEOVER = 5,
+	GAME_SCENE_GAMECLEAR = 6
 };
 
 struct GAME_STATE
@@ -41,7 +42,7 @@ public:
 	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device* pd3dDevice);
 	ID3D12RootSignature* GetGraphicsRootSignature() { return(m_pd3dGraphicsRootSignature); }
 	CHeightMapTerrain* GetTerrain() { return(m_pTerrain); }
-	bool IsLevelScene() { return((m_GameState.m_nScene == GAME_SCENE_LEVEL1) || (m_GameState.m_nScene == GAME_SCENE_LEVEL2)); }
+	bool IsLevelScene() { return((m_GameState.m_nScene == GAME_SCENE_LEVEL1) || (m_GameState.m_nScene == GAME_SCENE_LEVEL2) || (m_GameState.m_nScene == GAME_SCENE_LEVEL3)); }
 	bool IsLevel2Scene() { return(m_GameState.m_nScene == GAME_SCENE_LEVEL2); }
 
 	bool ProcessInput(UCHAR* pKeysBuffer);
@@ -81,10 +82,14 @@ public:
 	void RenderSceneObjects(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, CGameObject** ppObjects, int nObjects);
 	bool IsTitleNameClicked(HWND hWnd, LPARAM lParam);
 	bool IsMenuStartClicked(HWND hWnd, LPARAM lParam);
+	int IsMenuLevelClicked(HWND hWnd, LPARAM lParam);
 	bool IsGameOverMenuClicked(HWND hWnd, LPARAM lParam);
 	void ResetMenuCamera();
 	void ResetLevelState();
+	void UpdateMenuLevelSelection();
+	void BeginLevel1();
 	void BeginLevel2();
+	void BeginLevel3();
 	void StartTitleNameExplosion();
 
 	CPlayer*					m_pPlayer = NULL;
@@ -119,6 +124,9 @@ CGameObject**				 m_ppTitleObjects = NULL;
 	XMFLOAT3*				 m_pxmf3TitleObjectVelocity = NULL;
 	CGameObject**				 m_ppMenuObjects = NULL;
 	int								 m_nMenuObjects = 0;
+	int							 m_nSelectedMenuLevel = 1;
+	int							 m_nMenuLevelButtonStart[3] = { 0, 0, 0 };
+	int							 m_nMenuLevelButtonCount[3] = { 0, 0, 0 };
 	CGameObject**				 m_ppGameOverObjects = NULL;
 	int								 m_nGameOverObjects = 0;
 	CGameObject**				 m_ppGameClearObjects = NULL;
