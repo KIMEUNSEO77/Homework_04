@@ -742,7 +742,7 @@ void CScene::UpdateEnemyTankAttacks(float fTimeElapsed)
 		m_fEnemyTankFireCooldown[i] -= fTimeElapsed;
 		XMFLOAT3 xmf3Tank = m_ppEnemyTankObjects[i]->GetPosition();
 		float fDistance = DistanceXZ(xmf3Tank, xmf3Player);
-		float fAttackRange = (m_GameState.m_nScene == GAME_SCENE_LEVEL3) ? 650.0f : 150.0f;
+		float fAttackRange = (m_GameState.m_nScene == GAME_SCENE_LEVEL3) ? 420.0f : 150.0f;
 		if (fDistance > fAttackRange) continue;
 
 		float fAngle = RotateEnemyTankTowardPlayer(i, fTimeElapsed);
@@ -783,6 +783,12 @@ void CScene::UpdateEnemyTankShells(float fTimeElapsed)
 			{
 				MakeExplosion(xmf3Player);
 				if (m_nPlayerHealth > 0) m_nPlayerHealth--;
+				if ((m_GameState.m_nScene == GAME_SCENE_LEVEL3) && (m_nPlayerHealth <= 0))
+				{
+					m_bGameOver = true;
+					m_GameState.m_nScene = GAME_SCENE_GAMEOVER;
+					ResetMenuCamera();
+				}
 			}
 			m_ppEnemyTankShellObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
 			m_bEnemyTankShellActive[i] = false;
@@ -1350,10 +1356,10 @@ bool CScene::IsMenuStartClicked(HWND hWnd, LPARAM lParam)
 
 	int x = LOWORD(lParam);
 	int y = HIWORD(lParam);
-	int nLeft = int(nWidth * 0.34f);
-	int nRight = int(nWidth * 0.66f);
-	int nTop = int(nHeight * 0.49f);
-	int nBottom = int(nHeight * 0.64f);
+	int nLeft = int(nWidth * 0.30f);
+	int nRight = int(nWidth * 0.70f);
+	int nTop = int(nHeight * 0.45f);
+	int nBottom = int(nHeight * 0.68f);
 
 	return((x >= nLeft) && (x <= nRight) && (y >= nTop) && (y <= nBottom));
 }
@@ -1367,13 +1373,13 @@ int CScene::IsMenuLevelClicked(HWND hWnd, LPARAM lParam)
 
 	int x = LOWORD(lParam);
 	int y = HIWORD(lParam);
-	int nTop = int(nHeight * 0.20f);
-	int nBottom = int(nHeight * 0.46f);
+	int nTop = int(nHeight * 0.16f);
+	int nBottom = int(nHeight * 0.50f);
 	if ((y < nTop) || (y > nBottom)) return(0);
 
-	if ((x >= int(nWidth * 0.30f)) && (x <= int(nWidth * 0.46f))) return(1);
-	if ((x >= int(nWidth * 0.45f)) && (x <= int(nWidth * 0.62f))) return(2);
-	if ((x >= int(nWidth * 0.60f)) && (x <= int(nWidth * 0.80f))) return(3);
+	if ((x >= int(nWidth * 0.27f)) && (x <= int(nWidth * 0.47f))) return(1);
+	if ((x >= int(nWidth * 0.43f)) && (x <= int(nWidth * 0.64f))) return(2);
+	if ((x >= int(nWidth * 0.58f)) && (x <= int(nWidth * 0.83f))) return(3);
 	return(0);
 }
 
@@ -1404,10 +1410,10 @@ bool CScene::IsGameOverMenuClicked(HWND hWnd, LPARAM lParam)
 
 	int x = LOWORD(lParam);
 	int y = HIWORD(lParam);
-	int nLeft = int(nWidth * 0.36f);
-	int nRight = int(nWidth * 0.64f);
-	int nTop = int(nHeight * 0.55f);
-	int nBottom = int(nHeight * 0.72f);
+	int nLeft = int(nWidth * 0.32f);
+	int nRight = int(nWidth * 0.68f);
+	int nTop = int(nHeight * 0.51f);
+	int nBottom = int(nHeight * 0.76f);
 
 	return((x >= nLeft) && (x <= nRight) && (y >= nTop) && (y <= nBottom));
 }
