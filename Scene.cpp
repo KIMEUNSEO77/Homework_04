@@ -1363,13 +1363,13 @@ int CScene::IsMenuLevelClicked(HWND hWnd, LPARAM lParam)
 
 	int x = LOWORD(lParam);
 	int y = HIWORD(lParam);
-	int nTop = int(nHeight * 0.27f);
-	int nBottom = int(nHeight * 0.42f);
+	int nTop = int(nHeight * 0.20f);
+	int nBottom = int(nHeight * 0.46f);
 	if ((y < nTop) || (y > nBottom)) return(0);
 
-	if ((x >= int(nWidth * 0.33f)) && (x <= int(nWidth * 0.45f))) return(1);
-	if ((x >= int(nWidth * 0.48f)) && (x <= int(nWidth * 0.60f))) return(2);
-	if ((x >= int(nWidth * 0.63f)) && (x <= int(nWidth * 0.77f))) return(3);
+	if ((x >= int(nWidth * 0.30f)) && (x <= int(nWidth * 0.46f))) return(1);
+	if ((x >= int(nWidth * 0.45f)) && (x <= int(nWidth * 0.62f))) return(2);
+	if ((x >= int(nWidth * 0.60f)) && (x <= int(nWidth * 0.80f))) return(3);
 	return(0);
 }
 
