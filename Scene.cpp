@@ -1270,8 +1270,8 @@ bool CScene::IsLevel2ObstacleCollision(XMFLOAT3 xmf3Position)
 	if (!m_ppLevel2Objects) return(false);
 
 	const int nLevel2HouseObjects = 50;
-	const float fTankRadius = 42.0f;
-	const float fHouseRadius = 72.0f;
+	const float fTankRadius = 18.0f;
+	const float fHouseRadius = 34.0f;
 	const float fCollisionRadius = fTankRadius + fHouseRadius;
 
 	for (int i = 0; i < nLevel2HouseObjects; i++)
