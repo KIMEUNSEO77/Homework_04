@@ -44,6 +44,7 @@ public:
 	CHeightMapTerrain* GetTerrain() { return(m_pTerrain); }
 	bool IsLevelScene() { return((m_GameState.m_nScene == GAME_SCENE_LEVEL1) || (m_GameState.m_nScene == GAME_SCENE_LEVEL2) || (m_GameState.m_nScene == GAME_SCENE_LEVEL3)); }
 	bool IsLevel2Scene() { return(m_GameState.m_nScene == GAME_SCENE_LEVEL2); }
+	bool IsLevel2ObstacleCollision(XMFLOAT3 xmf3Position);
 
 	bool ProcessInput(UCHAR* pKeysBuffer);
 	void AnimateObjects(float fTimeElapsed);

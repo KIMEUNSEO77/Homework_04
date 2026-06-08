@@ -307,8 +307,8 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 	case WM_KEYUP:
 		switch (wParam)
 		{
-		case VK_ESCAPE:
-			if (!bProcessedByScene) ::PostQuitMessage(0);
+		case VK_ESCAPE:
+	if (!bProcessedByScene) ::PostQuitMessage(0);
 			break;
 		case VK_RETURN:
 			break;
@@ -453,7 +453,9 @@ void CGameFramework::ProcessInput()
 		if (cxDelta || cyDelta) m_pPlayer->Rotate(cyDelta, cxDelta, 0.0f);
 		m_pPlayer->Update(m_GameTimer.GetTimeElapsed());
 		return;
-	}
+	}
+	XMFLOAT3 xmf3PreviousPlayer = m_pPlayer->GetPosition();
+
 	if (!bProcessedByScene)
 	{
 		DWORD dwDirection = 0;
@@ -503,6 +505,11 @@ void CGameFramework::ProcessInput()
 		XMFLOAT3 xmf3Player = m_pPlayer->GetPosition();
 		CHeightMapTerrain* pTerrain = m_pScene->GetTerrain();
 		xmf3Player.y = pTerrain->GetHeight(xmf3Player.x, xmf3Player.z) + 18.0f;
+		if (m_pScene->IsLevel2ObstacleCollision(xmf3Player))
+		{
+			xmf3Player = xmf3PreviousPlayer;
+			xmf3Player.y = pTerrain->GetHeight(xmf3Player.x, xmf3Player.z) + 18.0f;
+		}
 		m_pPlayer->SetVelocity(XMFLOAT3(m_pPlayer->GetVelocity().x, 0.0f, m_pPlayer->GetVelocity().z));
 		m_pPlayer->SetPosition(xmf3Player);
 

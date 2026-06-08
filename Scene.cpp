@@ -1264,7 +1264,24 @@ void CScene::ResetMenuCamera()
 		pCamera->GenerateViewMatrix(xmf3CameraPosition, xmf3LookAt, xmf3Up);
 	}
 }
+bool CScene::IsLevel2ObstacleCollision(XMFLOAT3 xmf3Position)
+{
+	if (m_GameState.m_nScene != GAME_SCENE_LEVEL2) return(false);
+	if (!m_ppLevel2Objects) return(false);
 
+	const int nLevel2HouseObjects = 50;
+	const float fTankRadius = 42.0f;
+	const float fHouseRadius = 72.0f;
+	const float fCollisionRadius = fTankRadius + fHouseRadius;
+
+	for (int i = 0; i < nLevel2HouseObjects; i++)
+	{
+		if (!m_ppLevel2Objects[i]) continue;
+		XMFLOAT3 xmf3House = m_ppLevel2Objects[i]->GetPosition();
+		if (DistanceXZ(xmf3Position, xmf3House) < fCollisionRadius) return(true);
+	}
+	return(false);
+}
 // 게임 상태 초기화
 void CScene::ResetLevelState()
 {
