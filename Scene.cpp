@@ -452,7 +452,9 @@ void CScene::BuildLevel2Objects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandL
 		pTree->SetPosition(pTreePlacements[i].x, TerrainY(m_pTerrain, pTreePlacements[i].x, pTreePlacements[i].z, 0.0f), pTreePlacements[i].z);
 		m_ppLevel2Objects[nObject] = pTree;
 	}
-}void CScene::BuildLevel2EnemyTanks(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
+}
+
+void CScene::BuildLevel2EnemyTanks(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
 {
 	struct LEVEL2_TANK_PLACEMENT { float x, z, yaw; };
 	const LEVEL2_TANK_PLACEMENT pTankPlacements[10] =
@@ -481,7 +483,9 @@ void CScene::BuildLevel2Objects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandL
 		m_ppEnemyTankLodObjects[i] = pEnemyTankLod;
 		m_bEnemyTankActive[i] = true;
 	}
-}void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
+}
+
+void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
 {
 	m_pd3dGraphicsRootSignature = CreateGraphicsRootSignature(pd3dDevice);
 
@@ -563,7 +567,9 @@ void CScene::BuildLevel2Objects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandL
 		m_ppExplosionObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 0.8f, 0.1f, 1.0f), 4.0f);
 		m_pxmf3ExplosionVelocity[i] = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	}
-CreateShaderVariables(pd3dDevice, pd3dCommandList);
+
+	CreateShaderVariables(pd3dDevice, pd3dCommandList);
+
 }
 
 // ÆøÅº ¹ß»ç

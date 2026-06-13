@@ -307,7 +307,8 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 	case WM_KEYUP:
 		switch (wParam)
 		{
-		case VK_ESCAPE:
+		case VK_ESCAPE:
+
 	if (!bProcessedByScene) ::PostQuitMessage(0);
 			break;
 		case VK_RETURN:
@@ -453,7 +454,8 @@ void CGameFramework::ProcessInput()
 		if (cxDelta || cyDelta) m_pPlayer->Rotate(cyDelta, cxDelta, 0.0f);
 		m_pPlayer->Update(m_GameTimer.GetTimeElapsed());
 		return;
-	}
+	}
+
 	XMFLOAT3 xmf3PreviousPlayer = m_pPlayer->GetPosition();
 
 	if (!bProcessedByScene)
