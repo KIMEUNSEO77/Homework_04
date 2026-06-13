@@ -111,7 +111,8 @@ void CPlayer::Rotate(float x, float y, float z)
 			m_xmf3Right = Vector3::TransformNormal(m_xmf3Right, xmmtxRotate);
 		}
 	}
-	else if (nCurrentCameraMode == SPACESHIP_CAMERA)
+	else // Space 카메라에서 일반 카메라로 돌아올 때는 기울어진 축을 수평 기준으로 보정
+	if (nCurrentCameraMode == SPACESHIP_CAMERA)
 	{
 		m_pCamera->Rotate(x, y, z);
 		if (x != 0.0f)
@@ -187,6 +188,7 @@ void CPlayer::Update(float fTimeElapsed)
 	m_xmf3Velocity = Vector3::Add(m_xmf3Velocity, Vector3::ScalarProduct(m_xmf3Velocity, -fDeceleration, true));
 }
 
+// 기존 카메라의 방향 정보를 넘겨받아 새 카메라 객체를 생성
 CCamera *CPlayer::OnChangeCamera(DWORD nNewCameraMode, DWORD nCurrentCameraMode)
 {
 	CCamera *pNewCamera = NULL;
@@ -202,6 +204,7 @@ CCamera *CPlayer::OnChangeCamera(DWORD nNewCameraMode, DWORD nCurrentCameraMode)
 			pNewCamera = new CSpaceShipCamera(m_pCamera);
 			break;
 	}
+	// Space 카메라에서 일반 카메라로 돌아올 때는 기울어진 축을 수평 기준으로 보정
 	if (nCurrentCameraMode == SPACESHIP_CAMERA)
 	{
 		m_xmf3Right = Vector3::Normalize(XMFLOAT3(m_xmf3Right.x, 0.0f, m_xmf3Right.z));
@@ -254,8 +257,6 @@ CAirplanePlayer::CAirplanePlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommand
 {
 	m_pCamera = ChangeCamera(THIRD_PERSON_CAMERA, 0.0f);
 
-//	CGameObject *pGameObject = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"Model/SuperCobra.txt");
-//	pGameObject->SetScale(2.0f, 2.0f, 2.0f);
 	CGameObject *pGameObject = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, L"Model/Apache.txt");
 	pGameObject->Rotate(15.0f, 0.0f, 0.0f);
 	SetChild(pGameObject);
@@ -277,9 +278,7 @@ CAirplanePlayer::~CAirplanePlayer()
 void CAirplanePlayer::OnInitialize()
 {
 	m_pMainRotorFrame0 = FindFrame(L"rotor");
-//	m_pMainRotorFrame1 = FindFrame(L"black_m_6");
 	m_pTailRotorFrame0 = FindFrame(L"black_m_7");
-//	m_pTailRotorFrame1 = FindFrame(L"black_m_8");
 }
 
 void CAirplanePlayer::Animate(float fTimeElapsed, XMFLOAT4X4 *pxmf4x4Parent)
@@ -303,6 +302,7 @@ void CAirplanePlayer::OnPrepareRender()
 	CPlayer::OnPrepareRender();
 }
 
+// Scene의 현재 레벨에 따라 헬기 모델과 탱크 모델을 전환하기 위한 플래그
 void CAirplanePlayer::SetLevel2ModelEnabled(bool bEnabled)
 {
 	m_bLevel2ModelEnabled = bEnabled;
@@ -310,6 +310,7 @@ void CAirplanePlayer::SetLevel2ModelEnabled(bool bEnabled)
 
 void CAirplanePlayer::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
 {
+	// Level2에서 렌더링 모델만 탱크로 교체
 	if (m_bLevel2ModelEnabled && m_pLevel2TankObject)
 	{
 		CPlayer::OnPrepareRender();
@@ -329,6 +330,7 @@ void CAirplanePlayer::ReleaseUploadBuffers()
 	if (m_pLevel2TankObject) m_pLevel2TankObject->ReleaseUploadBuffers();
 }
 
+// 카메라 전환
 CCamera *CAirplanePlayer::ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed)
 {
 	DWORD nCurrentCameraMode = (m_pCamera) ? m_pCamera->GetMode() : 0x00;

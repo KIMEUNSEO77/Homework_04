@@ -301,6 +301,7 @@ void CGameFramework::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM
 
 void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
+	// 레벨별 특수 키는 Scene에서 먼저 처리하고, 남은 공통 키만 Framework에서 처리
 	bool bProcessedByScene = (m_pScene) ? m_pScene->OnProcessingKeyboardMessage(hWnd, nMessageID, wParam, lParam) : false;
 	switch (nMessageID)
 	{
@@ -316,6 +317,7 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 		case VK_F1:
 		case VK_F2:
 		case VK_F3:
+			// F1/F2/F3 입력으로 1인칭, Space, 3인칭 카메라를 전환
 			m_pCamera = m_pPlayer->ChangeCamera((DWORD)(wParam - VK_F1 + 1), m_GameTimer.GetTimeElapsed());
 			break;
 		case VK_F9:
@@ -438,6 +440,7 @@ void CGameFramework::ProcessInput()
 	static UCHAR pKeysBuffer[256];
 	bool bProcessedByScene = false;
 
+	// 레벨마다 의미가 다른 입력은 Scene에서 먼저 처리
 	if (GetKeyboardState(pKeysBuffer) && m_pScene) bProcessedByScene = m_pScene->ProcessInput(pKeysBuffer);
 	if (m_pScene && !m_pScene->IsLevelScene())
 	{
@@ -462,6 +465,7 @@ void CGameFramework::ProcessInput()
 	{
 		DWORD dwDirection = 0;
 		DWORD dwVerticalDirection = 0;
+		// Level2
 		bool bLevel2 = (m_pScene && m_pScene->IsLevel2Scene());
 
 		if (pKeysBuffer['W'] & 0xF0) dwDirection |= DIR_FORWARD;
@@ -507,6 +511,7 @@ void CGameFramework::ProcessInput()
 		XMFLOAT3 xmf3Player = m_pPlayer->GetPosition();
 		CHeightMapTerrain* pTerrain = m_pScene->GetTerrain();
 		xmf3Player.y = pTerrain->GetHeight(xmf3Player.x, xmf3Player.z) + 18.0f;
+		// 이동 전 위치로 되돌림
 		if (m_pScene->IsLevel2ObstacleCollision(xmf3Player))
 		{
 			xmf3Player = xmf3PreviousPlayer;
@@ -523,6 +528,7 @@ void CGameFramework::ProcessInput()
 		XMFLOAT3 xmf3FlatRight = XMFLOAT3(xmf3FlatLook.z, 0.0f, -xmf3FlatLook.x);
 		xmf3FlatRight = Vector3::Normalize(xmf3FlatRight);
 
+		// 탱크의 기울어진 자세를 계산
 		const float fForwardSample = 34.0f;
 		const float fSideSample = 24.0f;
 		XMFLOAT3 xmf3Front = Vector3::Add(xmf3Player, xmf3FlatLook, fForwardSample);
@@ -542,6 +548,7 @@ void CGameFramework::ProcessInput()
 
 		XMFLOAT3 xmf3TankUp = Vector3::CrossProduct(xmf3TankLook, xmf3TankRight, true);
 		xmf3TankRight = Vector3::CrossProduct(xmf3TankUp, xmf3TankLook, true);
+		// 계산된 Right/Up/Look 벡터를 적용
 		m_pPlayer->SetOrientation(xmf3TankRight, xmf3TankUp, xmf3TankLook);
 	}
 }

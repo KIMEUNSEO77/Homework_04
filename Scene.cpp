@@ -50,6 +50,7 @@ namespace
 		xmf3ToObject = Vector3::Normalize(xmf3ToObject);
 		return(Vector3::DotProduct(xmf3Look, xmf3ToObject) > -0.10f);
 	}
+
 	// 목표 위치를 바라보도록 y축 회전값 계산
 	void TurnObjectToTarget(CGameObject* pObject, XMFLOAT3 xmf3Target)
 	{
@@ -85,6 +86,7 @@ namespace
 		CGameObject* pHouseObject = new CGameObject();
 
 		pHouseObject->SetMesh(new CBinaryMeshFromFile(pd3dDevice, pd3dCommandList, pstrMeshFile));
+
 		pHouseObject->m_nMaterials = 1;
 		pHouseObject->m_ppMaterials = new CMaterial * [1];
 		pHouseObject->m_ppMaterials[0] = new CMaterial();
@@ -98,7 +100,7 @@ namespace
 }
 
 
-// 글자나 버튼 구성하는 큐브 오브젝트 생성해 벡터에 추가
+// 글자와 버튼 구성하는 큐브 오브젝트 생성해 벡터에 추가
 static CGameObject* CreateTextCube(vector<CGameObject*>& vObjects, CMesh* pMesh, float x, float y, float z, XMFLOAT4 xmf4Color)
 {
 	CGameObject* pObject = new CGameObject();
@@ -163,7 +165,7 @@ static const char* g_p1[7] = { "00100", "01100", "00100", "00100", "00100", "001
 static const char* g_p2[7] = { "11110", "00001", "00001", "11110", "10000", "10000", "11111" };
 static const char* g_p3[7] = { "11110", "00001", "00001", "01110", "00001", "00001", "11110" };
 
-// 문자 하나에 대응하는 7줄짜리 큐브 글자 패턴을 반환
+// 문자 하나에 대응하는 7줄 큐브 글자 패턴을 반환
 static const char** GetEnglishGlyph(char ch)
 {
 	switch (ch)
@@ -193,7 +195,7 @@ static const char** GetEnglishGlyph(char ch)
 	}
 }
 
-// 문자열 전체의 폭을 계산한 후 여러 글자 패턴을 이어 붙여 큐브 글자를 만듦
+// 문자열 전체의 폭을 계산해 여러 글자 패턴을 이어 붙여 큐브 글자를 만듦
 static void AddCubeLabel(vector<CGameObject*>& vObjects, CMesh* pMesh, const char* pstrText, float fCenterX, float fCenterY, float fZ, float fStep, float fGap, XMFLOAT4 xmf4Color)
 {
 	float fTotalWidth = 0.0f;
@@ -224,7 +226,7 @@ static void AddCubeLabel(vector<CGameObject*>& vObjects, CMesh* pMesh, const cha
 	}
 }
 
-// 버튼의 위, 아래, 왼쪽, 오른쪽 테두리를 큐브로 배치
+// 버튼의 테두리를 큐브로 배치
 static void AddButtonFrame(vector<CGameObject*>& vObjects, CMesh* pMesh, float fCenterX, float fCenterY, float fZ, float fWidth, float fHeight, float fStep, XMFLOAT4 xmf4Color)
 {
 	float fLeft = fCenterX - (fWidth * 0.5f);
@@ -317,6 +319,7 @@ void CScene::BuildTitleObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandLi
 	const char** ppName[3] = { pKim, pEun, pSeo };
 
 	float fX = -210.0f;
+	// 활성화된 적 탱크만 검사
 	for (int i = 0; i < 10; i++)
 	{
 		int nWidth = AddPatternGlyph(vObjects, pMesh, ppTitle[i], fX, 55.0f, 0.0f, 5.0f, XMFLOAT4(0.15f, 0.75f, 1.0f, 1.0f));
@@ -552,6 +555,7 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	if (m_pPlayerShell) m_pPlayerShell->SetScale(1.8f, 0.75f, 0.75f);
 	m_pSelectedEnemyMarker = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(4.0f, 3.2f, 0.1f, 1.0f), 10.0f);
 	m_pSelectedEnemyMarker->SetScale(2.4f, 0.25f, 2.4f);
+
 	for (int i = 0; i < 10; i++)
 	{
 		m_ppEnemyTankShellObjects[i] = CreateColorCube(pd3dDevice, pd3dCommandList, XMFLOAT4(0.25f, 4.0f, 1.2f, 1.0f), 7.0f);
@@ -583,7 +587,7 @@ void CScene::FireBomb()
 	m_bBombActive = true;
 }
 
-// 건물 배치
+// 일반 포탄 발사
 void CScene::FirePlayerShell()
 {
 	if (!m_pPlayer || !m_pPlayerShell || m_bPlayerShellActive || (m_GameState.m_nScene != GAME_SCENE_LEVEL2)) return;
@@ -602,6 +606,7 @@ void CScene::FirePlayerShell()
 	m_bPlayerShellActive = true;
 }
 
+// 선택된 적 탱크에 포탄을 발사
 void CScene::FirePlayerShellAtSelectedEnemy()
 {
 	if (!m_pPlayer || !m_pPlayerShell || m_bPlayerShellActive) return;
@@ -616,6 +621,7 @@ void CScene::FirePlayerShellAtSelectedEnemy()
 	if (Vector3::Length(xmf3Look) < 1.0f) return;
 	xmf3Look = Vector3::Normalize(xmf3Look);
 
+	// 포신 앞쪽에서 발사
 	XMFLOAT3 xmf3Up = Vector3::Normalize(m_pPlayer->GetUpVector());
 	XMFLOAT3 xmf3Right = Vector3::CrossProduct(xmf3Up, xmf3Look, true);
 	if (Vector3::Length(xmf3Right) < 0.001f) xmf3Right = XMFLOAT3(1.0f, 0.0f, 0.0f);
@@ -630,31 +636,39 @@ void CScene::FirePlayerShellAtSelectedEnemy()
 	xmf3Direction = Vector3::Normalize(xmf3Direction);
 
 	m_pPlayerShell->SetPosition(xmf3Start);
+
 	float fFlightTime = Vector3::Length(Vector3::Subtract(xmf3Target, xmf3Start)) / 280.0f;
 	m_xmf3PlayerShellVelocity = Vector3::ScalarProduct(xmf3Direction, 280.0f, false);
 	m_xmf3PlayerShellVelocity.y += (32.5f * fFlightTime) + 12.0f;
 	m_fPlayerShellLifeTime = 0.0f;
 	m_bPlayerShellActive = true;
 }
+
+// 스칼라 삼중적의 부호로 회전 방향을 정해 선택한 적을 향해 부드럽게 회전
 float CScene::RotatePlayerTowardSelectedEnemy(float fTimeElapsed)
 {
 	if (!m_pPlayer || (m_nSelectedEnemyTank < 0) || (m_nSelectedEnemyTank >= 10) || !m_bEnemyTankActive[m_nSelectedEnemyTank]) return(180.0f);
 
 	XMFLOAT3 xmf3Player = m_pPlayer->GetPosition();
 	XMFLOAT3 xmf3Target = m_ppEnemyTankObjects[m_nSelectedEnemyTank]->GetPosition();
+	// 플레이어 위치에서 선택된 적 탱크 위치로 향하는 방향 벡터를 계산
 	XMFLOAT3 xmf3Direction = Vector3::Subtract(xmf3Target, xmf3Player);
+	// y 성분 제거
 	xmf3Direction.y = 0.0f;
 	if (Vector3::Length(xmf3Direction) < 1.0f) return(0.0f);
 	xmf3Direction = Vector3::Normalize(xmf3Direction);
 
 	XMFLOAT3 xmf3Look = m_pPlayer->GetLookVector();
 	xmf3Look.y = 0.0f;
+	// 플레이어가 현재 바라보고 있는 Look 벡터도 xz 평면 기준으로 정규화
 	if (Vector3::Length(xmf3Look) < 0.001f) return(180.0f);
 	xmf3Look = Vector3::Normalize(xmf3Look);
 
+	// Up 벡터와 (현재 Look x 목표 방향)의 외적을 내적해 스칼라 삼중적 값을 계산
 	XMFLOAT3 xmf3Up = Vector3::Normalize(m_pPlayer->GetUpVector());
 	XMFLOAT3 xmf3Cross = Vector3::CrossProduct(xmf3Look, xmf3Direction, false);
 	float fTriple = Vector3::DotProduct(xmf3Up, xmf3Cross);
+
 	float fDot = max(-1.0f, min(1.0f, Vector3::DotProduct(xmf3Look, xmf3Direction)));
 	float fYaw = XMConvertToDegrees(atan2f(fTriple, fDot));
 	float fYawStep = max(-140.0f * fTimeElapsed, min(140.0f * fTimeElapsed, fYaw));
@@ -662,6 +676,8 @@ float CScene::RotatePlayerTowardSelectedEnemy(float fTimeElapsed)
 	m_pPlayer->Rotate(0.0f, fYawStep, 0.0f);
 	return(fabsf(fYaw));
 }
+
+// 회전이 거의 끝난 순간 자동 공격 포탄 발사
 void CScene::UpdateAutoAttack(float fTimeElapsed)
 {
 	if (!m_bAutoAttack) return;
@@ -677,11 +693,12 @@ void CScene::UpdateAutoAttack(float fTimeElapsed)
 	m_fAutoAttackTimer -= fTimeElapsed;
 	if ((fAngle < 6.0f) && (m_fAutoAttackTimer <= 0.0f) && !m_bPlayerShellActive)
 	{
-		FirePlayerShellAtSelectedEnemy();
+		FirePlayerShellAtSelectedEnemy();  // 자동 공격 포탄 발사
 		m_fAutoAttackTimer = 1.25f;
 	}
 }
 
+// 적 탱크 조준 회전
 float CScene::RotateEnemyTankTowardPlayer(int nTank, float fTimeElapsed)
 {
 	if (!m_pPlayer || (nTank < 0) || (nTank >= 10) || !m_ppEnemyTankObjects[nTank]) return(180.0f);
@@ -699,23 +716,29 @@ float CScene::RotateEnemyTankTowardPlayer(int nTank, float fTimeElapsed)
 	xmf3Look = Vector3::Normalize(xmf3Look);
 
 	XMFLOAT3 xmf3Up(0.0f, 1.0f, 0.0f);
+	// 부호로 플레이어가 적 탱크의 왼쪽에 있는지 오른쪽에 있는지 판단
 	XMFLOAT3 xmf3Cross = Vector3::CrossProduct(xmf3Look, xmf3Direction, false);
 	float fTriple = Vector3::DotProduct(xmf3Up, xmf3Cross);
 	float fDot = max(-1.0f, min(1.0f, Vector3::DotProduct(xmf3Look, xmf3Direction)));
+	// atan2f(스칼라 삼중적, 내적)을 이용해 목표 방향까지 필요한 yaw 회전 각도를 계산
 	float fYaw = XMConvertToDegrees(atan2f(fTriple, fDot));
 	float fYawStep = max(-95.0f * fTimeElapsed, min(95.0f * fTimeElapsed, fYaw));
 
+	// 적 탱크 모델을 플레이어 방향으로 회전
 	m_ppEnemyTankObjects[nTank]->Rotate(0.0f, fYawStep, 0.0f);
+	// 멀리서 보이는 LOD 큐브도 실제 탱크와 같은 방향을 유지하도록 함께 회전
 	if (m_ppEnemyTankLodObjects[nTank]) m_ppEnemyTankLodObjects[nTank]->Rotate(0.0f, fYawStep, 0.0f);
 
 	return(fabsf(fYaw));
 }
 
+// 적 탱크가 플레이어를 향해 포탄을 발사
 void CScene::FireEnemyTankShell(int nTank)
 {
 	if (!m_pPlayer || (nTank < 0) || (nTank >= 10) || !m_bEnemyTankActive[nTank] || !m_ppEnemyTankObjects[nTank] || !m_ppEnemyTankShellObjects[nTank]) return;
 	if (m_bEnemyTankShellActive[nTank]) return;
 
+	// 포신 앞쪽 위치 계산
 	XMFLOAT3 xmf3Tank = m_ppEnemyTankObjects[nTank]->GetPosition();
 	XMFLOAT3 xmf3Look = Vector3::Normalize(m_ppEnemyTankObjects[nTank]->GetLook());
 	XMFLOAT3 xmf3Up = Vector3::Normalize(m_ppEnemyTankObjects[nTank]->GetUp());
@@ -724,23 +747,28 @@ void CScene::FireEnemyTankShell(int nTank)
 
 	XMFLOAT3 xmf3Target = m_pPlayer->GetPosition();
 	xmf3Target.y += 22.0f;
+	// 포탄 시작 위치에서 목표 위치까지 향하는 방향 벡터를 계산
 	XMFLOAT3 xmf3Direction = Vector3::Subtract(xmf3Target, xmf3Start);
 	if (Vector3::Length(xmf3Direction) < 1.0f) return;
 	xmf3Direction = Vector3::Normalize(xmf3Direction);
 
 	m_ppEnemyTankShellObjects[nTank]->SetPosition(xmf3Start);
+	// 목표까지의 거리와 기본 속도를 이용해 예상 비행 시간을 계산
 	float fFlightTime = Vector3::Length(Vector3::Subtract(xmf3Target, xmf3Start)) / 240.0f;
 	m_xmf3EnemyTankShellVelocity[nTank] = Vector3::ScalarProduct(xmf3Direction, 240.0f, false);
 	m_xmf3EnemyTankShellVelocity[nTank].y += (30.0f * fFlightTime) + 8.0f;
+	// 포탄 생존 시간을 초기화하고 활성 상태로 변경
 	m_fEnemyTankShellLifeTime[nTank] = 0.0f;
 	m_bEnemyTankShellActive[nTank] = true;
 }
 
+// 사거리 안에 들어온 플레이어를 향해 회전 후 포탄 발사
 void CScene::UpdateEnemyTankAttacks(float fTimeElapsed)
 {
 	if (!m_pPlayer || m_bGameOver || ((m_GameState.m_nScene != GAME_SCENE_LEVEL2) && (m_GameState.m_nScene != GAME_SCENE_LEVEL3))) return;
 
 	XMFLOAT3 xmf3Player = m_pPlayer->GetPosition();
+	// 활성화된 적 탱크만 검사
 	for (int i = 0; i < 10; i++)
 	{
 		if (!m_bEnemyTankActive[i] || !m_ppEnemyTankObjects[i]) continue;
@@ -748,6 +776,7 @@ void CScene::UpdateEnemyTankAttacks(float fTimeElapsed)
 		m_fEnemyTankFireCooldown[i] -= fTimeElapsed;
 		XMFLOAT3 xmf3Tank = m_ppEnemyTankObjects[i]->GetPosition();
 		float fDistance = DistanceXZ(xmf3Tank, xmf3Player);
+		// Level3은 탐지 거리를 넓게 사용
 		float fAttackRange = (m_GameState.m_nScene == GAME_SCENE_LEVEL3) ? 420.0f : 150.0f;
 		if (fDistance > fAttackRange) continue;
 
@@ -760,29 +789,35 @@ void CScene::UpdateEnemyTankAttacks(float fTimeElapsed)
 	}
 }
 
+// 적 포탄 이동, 지형 충돌, 플레이어 피격 처리를 한 번에 갱신
 void CScene::UpdateEnemyTankShells(float fTimeElapsed)
 {
 	if (!m_pPlayer) return;
 
+	// 활성화된 적 탱크만 검사	
 	for (int i = 0; i < 10; i++)
 	{
 		if (!m_bEnemyTankShellActive[i] || !m_ppEnemyTankShellObjects[i]) continue;
 
+		// 포탄 이동
 		m_fEnemyTankShellLifeTime[i] += fTimeElapsed;
 		XMFLOAT3 xmf3Shell = m_ppEnemyTankShellObjects[i]->GetPosition();
 		xmf3Shell = Vector3::Add(xmf3Shell, m_xmf3EnemyTankShellVelocity[i], fTimeElapsed);
 		m_xmf3EnemyTankShellVelocity[i].y -= 60.0f * fTimeElapsed;
 		m_ppEnemyTankShellObjects[i]->SetPosition(xmf3Shell);
 
+		// 오래 살아있거나 지형에 닿은 포탄은 비활성화
 		float fGround = (m_pTerrain) ? m_pTerrain->GetHeight(xmf3Shell.x, xmf3Shell.z) : -10000.0f;
 		if ((m_fEnemyTankShellLifeTime[i] > 5.0f) || (xmf3Shell.y <= (fGround + 3.0f)))
 		{
 			m_ppEnemyTankShellObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
 			m_bEnemyTankShellActive[i] = false;
+
 			continue;
 		}
 
 		XMFLOAT3 xmf3Player = m_pPlayer->GetPosition();
+		// 0.18초 이후부터 충돌 검사
 		if ((m_fEnemyTankShellLifeTime[i] > 0.18f) && (DistanceXZ(xmf3Shell, xmf3Player) < 38.0f) && (xmf3Shell.y >= (xmf3Player.y - 12.0f)) && (xmf3Shell.y <= (xmf3Player.y + 55.0f)))
 		{
 			if (!m_bPlayerShieldActive)
@@ -798,6 +833,7 @@ void CScene::UpdateEnemyTankShells(float fTimeElapsed)
 			}
 			m_ppEnemyTankShellObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
 			m_bEnemyTankShellActive[i] = false;
+
 			continue;
 		}
 	}
@@ -852,6 +888,7 @@ void CScene::SelectEnemyTankFromMouse(HWND hWnd, LPARAM lParam)
 	float fBestHitDistance = 1000000.0f;
 	const float fTankPickRadius = 70.0f;
 
+	// 활성화된 적 탱크만 검사
 	for (int i = 0; i < 10; i++)
 	{
 		if (!m_bEnemyTankActive[i] || !m_ppEnemyTankObjects[i]) continue;
@@ -889,6 +926,7 @@ void CScene::SelectEnemyTankFromMouse(HWND hWnd, LPARAM lParam)
 		m_pSelectedEnemyMarker->SetPosition(0.0f, -10000.0f, 0.0f);
 	}
 }
+// 플레이어 포탄 이동과 적 탱크 충돌 검사
 void CScene::UpdatePlayerShell(float fTimeElapsed)
 {
 	if (!m_bPlayerShellActive || !m_pPlayerShell) return;
@@ -899,7 +937,7 @@ void CScene::UpdatePlayerShell(float fTimeElapsed)
 	m_xmf3PlayerShellVelocity.y -= 65.0f * fTimeElapsed;
 	m_pPlayerShell->SetPosition(xmf3Shell);
 
-		for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 10; i++)
 	{
 		if (!m_bEnemyTankActive[i] || !m_ppEnemyTankObjects[i]) continue;
 		XMFLOAT3 xmf3Tank = m_ppEnemyTankObjects[i]->GetPosition();
@@ -919,10 +957,11 @@ void CScene::UpdatePlayerShell(float fTimeElapsed)
 			}
 			m_pPlayerShell->SetPosition(0.0f, -10000.0f, 0.0f);
 			m_bPlayerShellActive = false;
+
 			return;
 		}
 	}
-	float fGround = (m_pTerrain) ? m_pTerrain->GetHeight(xmf3Shell.x, xmf3Shell.z) : -10000.0f;
+		float fGround = (m_pTerrain) ? m_pTerrain->GetHeight(xmf3Shell.x, xmf3Shell.z) : -10000.0f;
 	if ((m_fPlayerShellLifeTime > 6.0f) || (xmf3Shell.y <= (fGround + 3.0f)))
 	{
 		m_pPlayerShell->SetPosition(0.0f, -10000.0f, 0.0f);
@@ -997,7 +1036,7 @@ void CScene::UpdateUltimateGaugeObjects(CCamera* pCamera)
 	}
 }
 
-// 궁극기 발사
+// 플레이어 쉴드
 void CScene::UpdatePlayerShield(float fTimeElapsed)
 {
 	if (!m_pPlayer) return;
@@ -1012,6 +1051,7 @@ void CScene::UpdatePlayerShield(float fTimeElapsed)
 		}
 	}
 
+	// 쉴드가 꺼져 있으면 큐브들을 화면 밖으로 보내 렌더링되지 않게 함
 	if (!m_bPlayerShieldActive)
 	{
 		for (int i = 0; i < 12; i++) if (m_ppShieldObjects[i]) m_ppShieldObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
@@ -1051,6 +1091,7 @@ void CScene::UpdatePlayerShield(float fTimeElapsed)
 		m_ppShieldObjects[i]->Rotate(0.0f, 90.0f * fTimeElapsed, 0.0f);
 	}
 }
+// 체력 큐브를 카메라 앞에 배치
 void CScene::UpdateHealthObjects(CCamera* pCamera)
 {
 	if (!pCamera) return;
@@ -1070,6 +1111,8 @@ void CScene::UpdateHealthObjects(CCamera* pCamera)
 		m_ppHealthObjects[i]->SetPosition(xmf3Position);
 	}
 }
+
+// 궁극기 시작
 void CScene::StartUltimateRain()
 {
 	if (!m_pPlayer || m_bUltimateFiring || m_bGameOver || m_bGameClear) return;
@@ -1131,6 +1174,7 @@ void CScene::ReleaseObjects()
 	ReleaseSceneObjects(m_ppLevel2Objects, m_nLevel2Objects);
 	m_ppLevel2Objects = NULL;
 	m_nLevel2Objects = 0;
+
 	for (int i = 0; i < 10; i++)
 	{
 		if (m_ppEnemyTankObjects[i]) delete m_ppEnemyTankObjects[i];
@@ -1148,6 +1192,7 @@ void CScene::ReleaseObjects()
 	m_pPlayerShell = NULL;
 	if (m_pSelectedEnemyMarker) delete m_pSelectedEnemyMarker;
 	m_pSelectedEnemyMarker = NULL;
+
 	for (int i = 0; i < 10; i++)
 	{
 		if (m_ppHealthObjects[i]) delete m_ppHealthObjects[i];
@@ -1270,6 +1315,7 @@ void CScene::ResetMenuCamera()
 		pCamera->GenerateViewMatrix(xmf3CameraPosition, xmf3LookAt, xmf3Up);
 	}
 }
+// 건물과 플레이어 충돌 검사
 bool CScene::IsLevel2ObstacleCollision(XMFLOAT3 xmf3Position)
 {
 	if (m_GameState.m_nScene != GAME_SCENE_LEVEL2) return(false);
@@ -1311,6 +1357,7 @@ void CScene::ResetLevelState()
 	m_bAutoAttack = false;
 	m_fAutoAttackTimer = 0.0f;
 	if (m_pSelectedEnemyMarker) m_pSelectedEnemyMarker->SetPosition(0.0f, -10000.0f, 0.0f);
+
 	for (int i = 0; i < 10; i++)
 	{
 		m_bEnemyTankShellActive[i] = false;
@@ -1318,6 +1365,7 @@ void CScene::ResetLevelState()
 		m_fEnemyTankFireCooldown[i] = 1.0f + (i * 0.18f);
 		if (m_ppEnemyTankShellObjects[i]) m_ppEnemyTankShellObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
 	}
+
 	for (int i = 0; i < 10; i++)
 	{
 		if (m_ppCoinObjects[i])
@@ -1326,6 +1374,7 @@ void CScene::ResetLevelState()
 			m_ppCoinObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
 		}
 	}
+
 	for (int i = 0; i < 10; i++)
 	{
 		if (m_ppUltimateGaugeObjects[i]) m_ppUltimateGaugeObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
@@ -1441,7 +1490,7 @@ bool CScene::IsGameOverMenuClicked(HWND hWnd, LPARAM lParam)
 	return((x >= nLeft) && (x <= nRight) && (y >= nTop) && (y <= nBottom));
 }
 
-// 시작 화면 폭발
+// Level-1 시작 상태 초기화
 void CScene::BeginLevel1()
 {
 	ResetLevelState();
@@ -1471,16 +1520,19 @@ void CScene::BeginLevel1()
 	}
 }
 
+// Level3 시작 상태 초기화
 void CScene::BeginLevel3()
 {
 	ResetLevelState();
 	m_GameState.m_nScene = GAME_SCENE_LEVEL3;
 
+	// 탱크가 서로 겹치지 않도록
 	const float pfLevel3TankPlacements[10][3] =
 	{
 		{ 1030.0f, 520.0f, 180.0f }, { 520.0f, 1030.0f, 90.0f }, { 1520.0f, 1030.0f, -90.0f }, { 1030.0f, 1520.0f, 0.0f }, { 700.0f, 700.0f, 135.0f },
 		{ 1360.0f, 700.0f, -135.0f }, { 700.0f, 1360.0f, 45.0f }, { 1360.0f, 1360.0f, -45.0f }, { 1030.0f, 760.0f, 180.0f }, { 1030.0f, 1280.0f, 0.0f }
 	};
+
 	for (int i = 0; i < 10; i++)
 	{
 		float x = pfLevel3TankPlacements[i][0];
@@ -1517,6 +1569,7 @@ void CScene::BeginLevel3()
 		m_pPlayer->Update(0.0f);
 	}
 }
+// Level2 시작 상태 초기화
 void CScene::BeginLevel2()
 {
 	ResetLevelState();
@@ -1530,11 +1583,13 @@ void CScene::BeginLevel2()
 	 m_bAutoAttack = false;
 	 m_fAutoAttackTimer = 0.0f;
 	 if (m_pSelectedEnemyMarker) m_pSelectedEnemyMarker->SetPosition(0.0f, -10000.0f, 0.0f);
+	// 고정 좌표 사용
 	const float pfEnemyTankPlacements[10][3] =
 	 {
 		 { 1030.0f, 520.0f, 180.0f }, { 520.0f, 1030.0f, 90.0f }, { 1520.0f, 1030.0f, -90.0f }, { 1030.0f, 1520.0f, 0.0f }, { 700.0f, 700.0f, 135.0f },
 		 { 1360.0f, 700.0f, -135.0f }, { 700.0f, 1360.0f, 45.0f }, { 1360.0f, 1360.0f, -45.0f }, { 1030.0f, 760.0f, 180.0f }, { 1030.0f, 1280.0f, 0.0f }
 	 };
+
 	 for (int i = 0; i < 10; i++)
 	 {
 		 float x = pfEnemyTankPlacements[i][0];
@@ -1547,8 +1602,10 @@ void CScene::BeginLevel2()
 		 if (m_ppEnemyTankLodObjects[i]) m_ppEnemyTankLodObjects[i]->SetPosition(x, TerrainY(m_pTerrain, x, z, 18.0f), z);
 		 if (m_ppEnemyTankShellObjects[i]) m_ppEnemyTankShellObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
 	 }
+
 	 m_bPlayerShieldActive = false;
 	 m_fPlayerShieldTime = 0.0f;
+
 	 for (int i = 0; i < 12; i++) if (m_ppShieldObjects[i]) m_ppShieldObjects[i]->SetPosition(0.0f, -10000.0f, 0.0f);
 	 m_bUltimateFiring = false;
 
@@ -1606,6 +1663,7 @@ void CScene::StartTitleNameExplosion()
 // 현재 게임 상태에 따라 마우스 클릭으로 이름, START, MENU 버튼 입력을 처리
 bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
+	// 적 탱크 선택
 	if ((nMessageID == WM_RBUTTONDOWN) && (m_GameState.m_nScene == GAME_SCENE_LEVEL2))
 	{
 		SelectEnemyTankFromMouse(hWnd, lParam);
@@ -1653,7 +1711,7 @@ bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 	return(false);
 }
 
-// Level1에서 ESC키 입력 시 메뉴 화면으로 전환
+// 레벨별 단축키
 bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
 	if ((nMessageID == WM_KEYUP) && ((wParam == 'C') || (wParam == 'c')) && (m_GameState.m_nScene == GAME_SCENE_LEVEL2))
@@ -1709,9 +1767,9 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	return(false);
 }
 
-// Level1에서 Space 키 입력 시 폭탄 발사 처리
 bool CScene::ProcessInput(UCHAR* pKeysBuffer)
 {
+	// Level2는 탱크 포탄, 적 포탄, 자동공격, 쉴드, 폭발
 	if (m_GameState.m_nScene == GAME_SCENE_LEVEL2)
 	{
 		bool bShellKeyDown = ((pKeysBuffer[VK_SPACE] & 0xF0) != 0);
@@ -1719,6 +1777,8 @@ bool CScene::ProcessInput(UCHAR* pKeysBuffer)
 		m_bPlayerShellKeyDown = bShellKeyDown;
 		return(false);
 	}
+
+	// Level3은 Level-1 헬기 조작과 Level-2 적 탱크 전투 로직
 	if (m_GameState.m_nScene == GAME_SCENE_LEVEL3)
 	{
 		bool bFireKeyDown = ((pKeysBuffer[VK_SPACE] & 0xF0) != 0);
@@ -1789,7 +1849,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 		return;
 	}
 
-		if (m_GameState.m_nScene == GAME_SCENE_LEVEL3)
+	if (m_GameState.m_nScene == GAME_SCENE_LEVEL3)
 	{
 		UpdateEnemyTankAttacks(fTimeElapsed);
 		UpdateEnemyTankShells(fTimeElapsed);
@@ -1856,6 +1916,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 		if (m_pBomb) m_pBomb->UpdateTransform(NULL);
 		return;
 	}
+
 	if (m_GameState.m_nScene == GAME_SCENE_LEVEL2)
 	{
 		UpdateAutoAttack(fTimeElapsed);
@@ -2090,6 +2151,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 	for (int i = 0; i < 16; i++) if (m_ppExplosionObjects[i]) m_ppExplosionObjects[i]->UpdateTransform(NULL);
 }
 
+// 현재 GAME_SCENE_ID에 따라 필요한 오브젝트만 렌더링
 void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
 	pd3dCommandList->SetGraphicsRootSignature(m_pd3dGraphicsRootSignature);
@@ -2121,7 +2183,7 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 		return;
 	}
 
-		if (m_GameState.m_nScene == GAME_SCENE_LEVEL3)
+	if (m_GameState.m_nScene == GAME_SCENE_LEVEL3)
 	{
 		if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
 
@@ -2129,6 +2191,7 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 		{
 			if (!m_bEnemyTankActive[i]) continue;
 			float fDistance = DistanceXZFromCamera(pCamera, m_ppEnemyTankObjects[i]);
+			// 가까운 적은 실제 탱크 모델, 먼 적은 단순 큐브 LOD로 렌더링
 			if ((fDistance < 700.0f) && IsInFrontOfCamera(pCamera, m_ppEnemyTankObjects[i], 220.0f))
 			{
 				m_ppEnemyTankObjects[i]->Render(pd3dCommandList, pCamera);
@@ -2147,12 +2210,14 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 		for (int i = 0; i < 16; i++) if (m_pfExplosionTime[i] > 0.0f) m_ppExplosionObjects[i]->Render(pd3dCommandList, pCamera);
 		return;
 	}
+
 	if (m_GameState.m_nScene == GAME_SCENE_LEVEL2)
 	{
 		if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
 
 		for (int i = 0; i < m_nLevel2Objects; i++)
 		{
+			// 건물, 나무는 카메라 앞쪽과 일정 거리 안에 있을 때만 렌더링
 			if ((DistanceXZFromCamera(pCamera, m_ppLevel2Objects[i]) < 650.0f) && IsInFrontOfCamera(pCamera, m_ppLevel2Objects[i], 160.0f))
 			{
 				m_ppLevel2Objects[i]->Render(pd3dCommandList, pCamera);
@@ -2164,6 +2229,7 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 			if (!m_bEnemyTankActive[i]) continue;
 
 			float fDistance = DistanceXZFromCamera(pCamera, m_ppEnemyTankObjects[i]);
+			// Level2 적 탱크 LOD, 컬링 처리
 			if ((fDistance < 520.0f) && IsInFrontOfCamera(pCamera, m_ppEnemyTankObjects[i], 180.0f))
 			{
 				m_ppEnemyTankObjects[i]->Render(pd3dCommandList, pCamera);
@@ -2178,7 +2244,9 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 		for (int i = 0; i < 10; i++) if (m_bEnemyTankShellActive[i] && m_ppEnemyTankShellObjects[i]) m_ppEnemyTankShellObjects[i]->Render(pd3dCommandList, pCamera);
 		if (m_pSelectedEnemyMarker && (m_nSelectedEnemyTank >= 0)) m_pSelectedEnemyMarker->Render(pd3dCommandList, pCamera);
 		for (int i = 0; i < 12; i++) if (m_bPlayerShieldActive && m_ppShieldObjects[i]) m_ppShieldObjects[i]->Render(pd3dCommandList, pCamera);
+
 		UpdateHealthObjects(pCamera);
+
 		for (int i = 0; i < 10; i++) if (m_ppHealthObjects[i]) m_ppHealthObjects[i]->Render(pd3dCommandList, pCamera);
 		for (int i = 0; i < 16; i++) if (m_pfExplosionTime[i] > 0.0f) m_ppExplosionObjects[i]->Render(pd3dCommandList, pCamera);
 		return;
@@ -2195,8 +2263,12 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 	if (m_bBombActive && m_pBomb) m_pBomb->Render(pd3dCommandList, pCamera);
 	for (int i = 0; i < 10; i++) if (m_bUltimateBulletActive[i] && m_ppUltimateBulletObjects[i]) m_ppUltimateBulletObjects[i]->Render(pd3dCommandList, pCamera);
 	for (int i = 0; i < 16; i++) if (m_pfExplosionTime[i] > 0.0f) m_ppExplosionObjects[i]->Render(pd3dCommandList, pCamera);
+
 	UpdateUltimateGaugeObjects(pCamera);
+
 	for (int i = 0; i < 10; i++) if (m_ppUltimateGaugeObjects[i]) m_ppUltimateGaugeObjects[i]->Render(pd3dCommandList, pCamera);
+
 	UpdateCoinObjects(pCamera);
+
 	for (int i = 0; i < 10; i++) if (m_ppCoinObjects[i]) m_ppCoinObjects[i]->Render(pd3dCommandList, pCamera);
 }
